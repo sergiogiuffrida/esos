@@ -1,0 +1,42 @@
+#! /bin/sh
+
+source /etc/rc.d/common
+
+ZABBIX="/usr/sbin/zabbix_agentd"
+ZABBIX_LOCK="/var/lock/zabbix_agentd"
+DFLT_OPTS="-c /etc/zabbix_agentd.conf > /dev/null 2>&1"
+
+check_args ${@}
+
+SCRIPT="$(/usr/bin/basename ${0})"
+if check_opts_set ${SCRIPT}; then
+    USER_OPTS="$(get_rc_opts ${SCRIPT})"
+    if [ ${?} -ne 0 ]; then
+        /bin/echo ${USER_OPTS}
+        exit 1
+    fi
+else
+    USER_OPTS="${DFLT_OPTS}"
+fi
+
+start() {
+    /bin/echo "Starting ZABBIX..."
+    eval ${ZABBIX} ${USER_OPTS} || exit 1
+    /bin/touch ${ZABBIX_LOCK}
+    /bin/sleep 1
+}
+
+stop() {
+    /bin/echo "Stopping ZABBIX..."
+    /bin/kill -15 $(/bin/pidof ${ZABBIX}) || exit 1
+    wait_for_stop ${ZABBIX} && /bin/rm -f ${ZABBIX_LOCK}
+}
+
+status() {
+    /bin/pidof ${ZABBIX} > /dev/null 2>&1
+    exit ${?}
+}
+
+# Perform specified action
+${1}
+

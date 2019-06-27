@@ -99,7 +99,10 @@ git_hash	:= $(shell if hash="$$($(GIT) --git-dir=$(SRC_DIR)/.git \
 git_tag		:= $(shell if tag="$$($(GIT) --git-dir=$(SRC_DIR)/.git \
 		describe --exact-match --abbrev=0 2>&1)"; \
 		then echo -n "$$tag"; else echo -n ""; fi)
-rel_name	:= $(git_tag)$(opt_suffix)
+pwn_tag		:= $(shell if tag="$$($(GIT) --git-dir=$(SRC_DIR)/.git \
+		tag |tail -1 2>&1)"; \
+		then echo -n "$$tag"; else echo -n ""; fi)
+rel_name	:= $(pwn_tag)$(opt_suffix)
 dev_name	:= $(git_branch)_$(git_hash)$(opt_suffix)
 esos_ver	:= $(if $(filter %.x,$(git_branch)),$(rel_name),$(dev_name))
 prod_suffix	:= -esos.prod
@@ -110,7 +113,7 @@ ifeq ($(enable_commercial),yes)
 product = Quantum ESOS
 pkg_name = esos
 else
-product = ESOS OSS
+product = Pwn ESOS OSS
 pkg_name = esos
 endif
 
@@ -177,7 +180,7 @@ dist_files	= $(addprefix $(DIST_FILES_DIR)/, \
 		lsscsi-0.28.tar.gz \
 		sg3_utils-1.44.tar.xz \
 		groff-1.22.3.tar.gz \
-		qlogic_fw-20140928.tar.gz \
+		qlogic_fw-20190427.tar.gz \
 		iniparser-3.2.tar.gz \
 		cdk-5.0-20161210.tar.gz \
 		scst-3.3.x_r7994.tar.xz \
@@ -208,6 +211,7 @@ dist_files	= $(addprefix $(DIST_FILES_DIR)/, \
 		db-5.3.28.tar.gz \
 		snappy-1.1.3.tar.gz \
 		fence-agents-4.2.0.tar.gz \
+		zabbix-4.0.7.tar.gz \
 		opensm-3.3.20.tar.gz \
 		curl-7.50.3.tar.bz2 \
 		Net-Telnet-3.04.tar.gz \
@@ -315,7 +319,7 @@ dist_files	= $(addprefix $(DIST_FILES_DIR)/, \
 		lshw-B.02.18.tar.gz \
 		iozone3-487.tar.xz \
 		win_binaries-20180813.tar.xz)
-dist_files_repo	= http://download.esos-project.com/dist_files
+dist_files_repo	= http://localhost/dist_files
 
 # Check if we're chroot'd or not
 ifeq ($(shell if [ "`awk '$$5=="/" {print $$1}' </proc/1/mountinfo`" != \
@@ -370,7 +374,7 @@ chroot_tgts	:= kernel_headers.chroot glibc.chroot gcc.chroot \
 		dlm.chroot ipmitool.chroot sysklogd.chroot less.chroot \
 		irqbalance.chroot ethtool.chroot postgresql.chroot \
 		mysql.chroot infiniband-diags.chroot libibmad.chroot \
-		perftest.chroot nrpe.chroot bcache-tools.chroot \
+		perftest.chroot nrpe.chroot zabbix.chroot bcache-tools.chroot \
 		util-linux.chroot thin-provisioning-tools.chroot expat.chroot \
 		boost.chroot librdmacm.chroot sysstat.chroot pciutils.chroot \
 		net-snmp.chroot nut.chroot libusb.chroot libusb_compat.chroot \
@@ -1943,8 +1947,10 @@ Python.chroot: glibc.chroot gcc.chroot bzip2.chroot readline.chroot \
 	pip3 install asn1crypto==0.24.0
 	pip3 install cryptography==2.4.2
 	pip3 install paramiko==2.4.2
+	pip3 install rmate
 	$(RM) /.cache
 	$(TOUCH) $(@)
+	$(LN) /usr/bin/python3 /usr/bin/python
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 qlogic_fw.chroot:
@@ -2738,7 +2744,7 @@ open-lldp.chroot: glibc.chroot libconfig.chroot libnl.chroot
 	$(MAKE) --directory=$(tgt_src_dir) CC="gcc -fgnu89-inline"
 	$(MAKE) --directory=$(tgt_src_dir) install-exec
 	$(MAKE) --directory=$(tgt_src_dir) install-lldpad_includeHEADERS
-	$(MAKE) --directory=$(tgt_src_dir) install-man 
+	$(MAKE) --directory=$(tgt_src_dir) install-man
 	$(MAKE) --directory=$(tgt_src_dir) install-pkgconfigDATA
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
@@ -2920,6 +2926,16 @@ perftest.chroot: glibc.chroot infiniband-diags.chroot
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+zabbix.chroot: glibc.chroot openssl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --enable-agent --prefix=/usr \
+	--sysconfdir=/etc
+	$(MAKE) --directory=$(tgt_src_dir) all
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
@@ -4054,7 +4070,7 @@ image:
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### Installing image (staging)..."
 	$(MOUNT) $$($(ECHO) $(loop_dev) | \
-	$(SED) 's/^\/dev/\/dev\/mapper/')p2 $(MOUNT_DIR) 
+	$(SED) 's/^\/dev/\/dev\/mapper/')p2 $(MOUNT_DIR)
 	$(MKDIR) $(MOUNT_DIR)/boot
 	$(MOUNT) $$($(ECHO) $(loop_dev) | \
 	$(SED) 's/^\/dev/\/dev\/mapper/')p1 $(MOUNT_DIR)/boot
@@ -4121,6 +4137,8 @@ image:
 	$(INSTALL) $(SRC_DIR)/scripts/support_pkg.sh \
 	$(STAGING_DIR)/usr/local/sbin/
 	$(INSTALL) $(SRC_DIR)/scripts/raid_tools.py \
+	$(STAGING_DIR)/usr/local/sbin/
+	$(INSTALL) $(SRC_DIR)/scripts/backup.sh \
 	$(STAGING_DIR)/usr/local/sbin/
 	$(INSTALL) $(SRC_DIR)/scripts/iso_installer.sh \
 	$(STAGING_DIR)/usr/local/sbin/
@@ -4296,4 +4314,3 @@ ifeq ($(in_chroot),no)
     include $(customize_dir)/extra-support.mk
   endif
 endif
-
