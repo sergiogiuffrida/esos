@@ -4,7 +4,7 @@ source /etc/rc.d/common
 
 ZABBIX="/usr/sbin/zabbix_agentd"
 ZABBIX_LOCK="/var/lock/zabbix_agentd"
-DFLT_OPTS="-c /etc/zabbix_agentd.conf > /dev/null 2>&1"
+DFLT_OPTS="-c /etc/zabbix/zabbix_agentd.conf > /dev/null 2>&1"
 
 check_args ${@}
 
@@ -39,4 +39,3 @@ status() {
 
 # Perform specified action
 ${1}
-

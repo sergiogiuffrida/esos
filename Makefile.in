@@ -2934,7 +2934,7 @@ zabbix.chroot: glibc.chroot openssl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --enable-agent --prefix=/usr \
-	--sysconfdir=/etc
+	--sysconfdir=/etc/zabbix
 	$(MAKE) --directory=$(tgt_src_dir) all
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -4228,6 +4228,8 @@ image:
 	$(CHOWN) 0:65534 $(STAGING_DIR)/var/lib/stunnel
 	$(CHMOD) 1770 $(STAGING_DIR)/var/lib/stunnel
 	$(CHOWN) 104:104 $(STAGING_DIR)/var/run/web_ui
+	$(CHMOD) 1775 $(STAGING_DIR)/etc/zabbix/scripts/iostats.sh
+	$(CHOWN) 0:499 $(STAGING_DIR)/etc/zabbix/scripts/iostats.sh
 	$(LN) rc.0 $(STAGING_DIR)/etc/rc.d/rc.6
 	$(LN) rc.2 $(STAGING_DIR)/etc/rc.d/rc.5
 	$(LN) rc.2 $(STAGING_DIR)/etc/rc.d/rc.4
