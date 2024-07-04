@@ -1,0 +1,143 @@
+diff --git a/cheroot/workers/threadpool.py b/cheroot/workers/threadpool.py
+index 915934cceaab1cf7dc2e3ceb5b42a331bc466b5a..6176454385eef85ed03533ac67b7adccf2447709 100644
+--- a/cheroot/workers/threadpool.py
++++ b/cheroot/workers/threadpool.py
+@@ -14,6 +14,7 @@ import threading
+ import time
+ import socket
+ import warnings
++from ssl import SSLError
+ 
+ from six.moves import queue
+ 
+@@ -123,6 +124,8 @@ class WorkerThread(threading.Thread):
+                 keep_conn_open = False
+                 try:
+                     keep_conn_open = conn.communicate()
++                except SSLError as ex:
++                    self.server.error_log(f'ignored extra SSLError: {repr(ex)}')
+                 finally:
+                     if keep_conn_open:
+                         self.server.put_conn(conn)
+@@ -137,7 +140,8 @@ class WorkerThread(threading.Thread):
+                     self.conn = None
+         except (KeyboardInterrupt, SystemExit) as ex:
+             self.server.interrupt = ex
+-
++        finally:
++            self.server.error_log('worker thread unexpected exit')
+ 
+ class ThreadPool:
+     """A Request Queue for an HTTPServer which pools threads.
+
+--- a/cmd2/parsing.py
++++ b/cmd2/parsing.py
+@@ -147,6 +147,9 @@
+     # if output was redirected, the destination file token (quotes preserved)
+     output_to: str = attr.ib(default='', validator=attr.validators.instance_of(str))
+
++    # time/date stamp of command
++    timestamp: str = attr.ib(default='', validator=attr.validators.instance_of(str))
++
+     # Used in JSON dictionaries
+     _args_field = 'args'
+
+@@ -406,6 +409,8 @@
+         :raises: Cmd2ShlexError if a shlex error occurs (e.g. No closing quotation)
+         """
+
++        import datetime
++
+         # handle the special case/hardcoded terminator of a blank line
+         # we have to do this before we tokenize because tokenizing
+         # destroys all unquoted whitespace in the input
+@@ -527,6 +532,9 @@
+         else:
+             multiline_command = ''
+
++        td = datetime.datetime.now()
++        timestampstr = f'{td.year}-{td.month:02}-{td.day:02} {td.hour:02}:{td.minute:02}:{td.second:02}'
++
+         # build the statement
+         statement = Statement(
+             args,
+@@ -539,6 +547,7 @@
+             pipe_to=pipe_to,
+             output=output,
+             output_to=output_to,
++            timestamp=timestampstr,
+         )
+         return statement
+
+--- a/cmd2/cmd2.py
++++ b/cmd2/cmd2.py
+@@ -2600,6 +2600,7 @@
+                 pipe_to=statement.pipe_to,
+                 output=statement.output,
+                 output_to=statement.output_to,
++                timestamp=statement.timestamp,
+             )
+         return statement
+
+--- a/cmd2/constants.py
++++ b/cmd2/constants.py
+@@ -57,3 +57,6 @@
+ 
+ # custom attributes added to argparse Namespaces
+ NS_ATTR_SUBCMD_HANDLER = '__subcmd_handler__'
++
++# QUANTUM - define list of allowed pipe commands
++ALLOWED_PIPES_CMDS = ['grep', 'egrep', 'wc', 'more', 'less', 'tail', 'head']
+--- a/cmd2/cmd2.py
++++ b/cmd2/cmd2.py
+@@ -2668,6 +2668,25 @@
+             pass
+ 
+         elif statement.pipe_to:
++            # QUANTUM - filter out unwanted characters in pipe string
++            pipe_to_str = ''
++            # Dont allow '&', '||' characters in pipe string
++            pipe_to_str = re.split(r'&|\|\|', statement.pipe_to)[0]
++
++            # process subpipes to make sure all commands they are allowed
++            if '|' in pipe_to_str:
++                # Make sure all subpipe commands are allowed
++                sub_pipe_cmd = pipe_to_str.split('|')[1:]
++                for x in sub_pipe_cmd:
++                    # ignore the whole pipe sequence and subpipes if we found
++                    # a command that is not allowed
++                    if x.split()[0] not in constants.ALLOWED_PIPES_CMDS:
++                        return
++
++            # ignore the whole pipe sequence if we found an unsupported command
++            if not any([x in pipe_to_str for x in constants.ALLOWED_PIPES_CMDS]):
++                return
++
+             # Create a pipe with read and write sides
+             read_fd, write_fd = os.pipe()
+ 
+@@ -2691,7 +2710,7 @@
+ 
+             # For any stream that is a StdSim, we will use a pipe so we can capture its output
+             proc = subprocess.Popen(  # type: ignore[call-overload]
+-                statement.pipe_to,
++                pipe_to_str,
+                 stdin=subproc_stdin,
+                 stdout=subprocess.PIPE if isinstance(self.stdout, utils.StdSim) else self.stdout,  # type: ignore[unreachable]
+                 stderr=subprocess.PIPE if isinstance(sys.stderr, utils.StdSim) else sys.stderr,  # type: ignore[unreachable]
+@@ -4050,8 +4069,14 @@
+             if shell:
+                 kwargs['executable'] = shell
+ 
++        # QUANTUM - Don't allow certain characters in the shell command args
++        cmd_args = ''
++        if args.command_args:
++            # Don't allow '&', '||' characters in the command
++            cmd_args = re.split(r'&|\|\|', ' '.join(args.command_args))[0]
++
+         # Create a list of arguments to shell
+-        tokens = [args.command] + args.command_args
++        tokens = [args.command] + cmd_args.split()
+ 
+         # Expand ~ where needed
+         utils.expand_user_in_tokens(tokens)

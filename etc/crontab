@@ -4,7 +4,7 @@ MAILTO=root
 HOME=/
 
 # Check all file systems; fsck uses the exit status to indicate a problem
-0 0 * * * root fsck_out=$(/usr/sbin/fsck -A -M -T -p); if [ ${?} -ne 0 ]; then echo ${fsck_out}; fi
+0 0 * * * root fsck_out=$(/usr/sbin/fsck -A -M -T -p 2>&1); fsck_exit=${?}; if [ ${fsck_exit} -gt 0 ] && [ ${fsck_exit} -lt 8 ]; then echo ${fsck_out}; fi
 
 # Configuration sync -- we cron this for a few times per day just in case
 10 0,8,16 * * * root /usr/local/sbin/conf_sync.sh
@@ -18,5 +18,3 @@ HOME=/
 # Set the system time
 40 * * * * root if [ -s "/etc/ntp_server" ]; then /usr/sbin/ntpd -n -q -N -p `/bin/cat /etc/ntp_server`; fi > /dev/null 2>&1
 
-# Compact any configured DB (if perfagent is enabled)
-0 23 * * * root source /etc/rc.d/common && if check_enabled "rc.perfagent"; then /usr/local/bin/db_compact.py; fi > /dev/null

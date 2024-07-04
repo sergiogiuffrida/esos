@@ -16,7 +16,6 @@ EMAIL_TO="root"
 EMAIL_FROM="root"
 TMP_PATH="/tmp"
 
-
 # Check logical drives (if any) for all controllers
 echo "Checking hardware RAID logical drives..."
 SAVED_IFS=${IFS}
@@ -53,7 +52,8 @@ for i in $(${HW_RAID_CLI} --list-physical-drives); do
     pd_size="$(echo ${i} | cut -d, -f6)"
     pd_model="$(echo ${i} | cut -d, -f7)"
     if [[ ("${ctrlr_type}" = "MegaRAID" && "${pd_state}" != "UGood" && \
-        "${pd_state}" != "Onln" && "${pd_state}" != "GHS") || \
+        "${pd_state}" != "Onln" && "${pd_state}" != "GHS" && \
+        "${pd_state}" != "JBOD") || \
         ("${ctrlr_type}" = "PERC" && "${pd_state}" != "UGood" && \
         "${pd_state}" != "Onln" && "${pd_state}" != "GHS" && \
         "${pd_state}" != "DHS" && "${pd_state}" != "JBOD") || \
@@ -194,11 +194,11 @@ echo -e "Memory Used Percent:\t$(echo ${prct_mem_used} | \
     awk '{ printf("%d", $1 * 100) }')%"
 echo
 
-# Check disk space (well, tmpfs root FS space)
-disk_total=$(df -m / | grep tmpfs | awk '{print $2}')
-disk_used=$(df -m / | grep tmpfs | awk '{print $3}')
-disk_avail=$(df -m / | grep tmpfs | awk '{print $4}')
-echo "Disk (/ -> root tmpfs) space check..."
+# Check disk space (well, tmpfs/overlay root FS space)
+disk_total=$(df -m / | egrep 'tmpfs|overlay' | awk '{print $2}')
+disk_used=$(df -m / | egrep 'tmpfs|overlay' | awk '{print $3}')
+disk_avail=$(df -m / | egrep 'tmpfs|overlay' | awk '{print $4}')
+echo "Disk (/ -> root tmpfs/overlay) space check..."
 echo -e "Total Disk Space:\t${disk_total} MB\nUsed Disk" \
     "Space:\t${disk_used} MB\nAvail. Disk Space:\t${disk_avail} MB"
 prct_disk_used=$(echo "${disk_used} ${disk_total}" | \
@@ -214,7 +214,7 @@ if [ x$(perl -e "print ${prct_disk_used} > ${DISK_PRCT_THRESH}") = "x1" ]; then
 fi
 echo
 
-# Check if the USB drive is available/working via one of the FS
+# Check if the boot drive is available/working via one of the FS
 # labels (no indentation for if statement)
 if ! findfs LABEL=${CHK_FS_LABEL} > /dev/null 2>&1; then
 # Create a archive of the configuration files
@@ -226,10 +226,10 @@ tar cpfz ${arch_pkg_path} --exclude='rc.d' --exclude='ssh' --exclude='shadow*' \
 sendmail -t << _EOF_
 To: ${EMAIL_TO}
 From: ${EMAIL_FROM}
-Subject: ESOS USB Flash Drive Failure - $(hostname) ($(date))
-A possible USB flash drive failure has been detected on Enterprise Storage OS host "$(hostname)".
+Subject: Boot Drive Failure - $(hostname) ($(date))
+A possible boot drive failure has been detected on $(cat /etc/esos-release) host "$(hostname)".
 
-The findfs utility exited non-zero when attempting to resolve file system label "${CHK_FS_LABEL}". This may be due to a failed ESOS USB flash drive, or because the device was removed, or some other reason.
+The findfs utility exited non-zero when attempting to resolve file system label "${CHK_FS_LABEL}". This may be due to a failed boot drive, or because the device was removed, or some other reason.
 
 We're attaching a tar ball archive of the ESOS configuration files for this host just incase.
 

@@ -1,0 +1,36 @@
+--- a/src/sbd-md.c	2019-11-19 12:47:26.000000000 -0500
++++ b/src/sbd-md.c	2021-09-17 08:47:34.975794848 -0400
+@@ -891,8 +891,13 @@
+ 	if (quorum_write(successful_delivery)) {
+ 		cl_log(LOG_INFO, "Message successfully delivered.");
+ 		return 0;
++	} else if (successful_delivery) {
++		cl_log(LOG_WARNING, "Message only delivered to %d devices, "
++				"not a quorum write (half of devices)!",
++				successful_delivery);
++		return 0;
+ 	} else {
+-		cl_log(LOG_ERR, "Message is not delivered via more then a half of devices");
++		cl_log(LOG_ERR, "Message is not delivered via any devices!");
+ 		return -1;
+ 	}
+ }
+--- a/agent/sbd.in	2019-11-19 12:47:26.000000000 -0500
++++ b/agent/sbd.in	2023-11-23 23:32:08.696725216 -0500
+@@ -28,7 +28,15 @@
+ 	fi
+ fi
+ 
+-SBD_DEVS=${sbd_device%;}
++SBD_DEVS=""
++for i in ${sbd_device//;/ }; do
++	if [ -b "${i}" ]; then
++		SBD_DEVS="${SBD_DEVS}${i};"
++	else
++		ha_log.sh warn "Block device '${i}' does not exist!"
++	fi
++done
++SBD_DEVS=${SBD_DEVS%;}
+ 
+ sbd_device=${SBD_DEVS//;/ -d }
+ 

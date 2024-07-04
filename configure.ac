@@ -1,7 +1,7 @@
 dnl Wrapper for AC_CHECK_PROG that kills configure script if program is missing
 AC_DEFUN([MY_PATH_PROG],
-	[AC_CHECK_PROG([$1],[$1],[$1],NOT_FOUND,$PATH:/sbin:/usr/sbin:/usr/local/sbin)
-	test $[$1] == NOT_FOUND && AC_MSG_ERROR([program $1 is required])])
+	[AC_CHECK_PROG(m4_default([$2],[$1]),[$1],[$1],NOT_FOUND,$PATH:/sbin:/usr/sbin:/usr/local/sbin)
+	test $m4_default([$2],[$1]) == NOT_FOUND && AC_MSG_ERROR([program $1 is required])])
 
 AC_INIT()
 
@@ -36,7 +36,8 @@ MY_PATH_PROG([sfdisk])
 MY_PATH_PROG([cat])
 MY_PATH_PROG([grep])
 MY_PATH_PROG([dd])
-MY_PATH_PROG([mkfs])
+MY_PATH_PROG([mkfs.vfat],[mkfs_vfat])
+MY_PATH_PROG([mkfs.ext4],[mkfs_ext4])
 MY_PATH_PROG([ln])
 MY_PATH_PROG([mount])
 MY_PATH_PROG([umount])
@@ -57,16 +58,16 @@ MY_PATH_PROG([zip])
 MY_PATH_PROG([xz])
 MY_PATH_PROG([readlink])
 MY_PATH_PROG([strip])
-AC_CHECK_PROG(PBZIP2,pbzip2,yes)
-if test x"${PBZIP2}" = x"yes"; then
-	bzip2=pbzip2
-else
-	MY_PATH_PROG([bzip2])
-fi
 MY_PATH_PROG([git])
 MY_PATH_PROG([flock])
 MY_PATH_PROG([zic])
 MY_PATH_PROG([mv])
+MY_PATH_PROG([rsync])
+MY_PATH_PROG([mksquashfs])
+MY_PATH_PROG([rmdir])
+MY_PATH_PROG([cut])
+MY_PATH_PROG([tr])
+MY_PATH_PROG([mountpoint])
 
 dnl Setup build directories
 if test x"${PWD}" != x; then
@@ -105,12 +106,15 @@ if test -d "${chroot_dir}"; then
 	${mkdir} -p ${chroot_dir}/{build,etc,bin,sbin,dev,proc,sys,root,home,run} || exit 1
 	${mkdir} -p ${chroot_dir}/boot/grub || exit 1
 	${mkdir} -p ${chroot_dir}/root/.ssh || exit 1
-	${mkdir} -p ${chroot_dir}/mnt/{root,conf,logs,vdisks,mhvtl} || exit 1
+	${touch} ${chroot_dir}/root/.bash_history || exit 1
+	${mkdir} -p ${chroot_dir}/mnt/{root,conf,logs,data,vdisks,mhvtl} || exit 1
 	${mkdir} -p ${chroot_dir}/lib/firmware || exit 1
 	${mkdir} -p ${chroot_dir}/usr/{bin,sbin,libexec,lib} || exit 1
-	${mkdir} -p ${chroot_dir}/usr/local/{bin,sbin} || exit 1
+	${mkdir} -p ${chroot_dir}/usr/local/{bin,sbin,lib} || exit 1
 	${mkdir} -p ${chroot_dir}/opt/{bin,sbin,lib} || exit 1
 	${mkdir} -p ${chroot_dir}/run/lvm || exit 1
+	${mkdir} -p ${chroot_dir}/run/lock/iscsi || exit 1
+	${mkdir} -p ${chroot_dir}/run/irqbalance || exit 1
 	${mkdir} -p -m 1777 ${chroot_dir}/tmp || exit 1
 	${mkdir} -p ${chroot_dir}/var/{spool,lock,run,state,cache,log} || exit 1
 	${mkdir} -p ${chroot_dir}/var/lock/subsys || exit 1
@@ -122,7 +126,7 @@ if test -d "${chroot_dir}"; then
 	${mkdir} -p ${chroot_dir}/var/lib/corosync || exit 1
 	${mkdir} -p ${chroot_dir}/var/lib/pacemaker/{cores,pengine,cib,blackbox} || exit 1
 	${mkdir} -p ${chroot_dir}/var/lib/pacemaker/cores/{root,hacluster} || exit 1
-	${mkdir} -p ${chroot_dir}/var/run/{crm,mdadm,stunnel,web_ui} || exit 1
+	${mkdir} -p ${chroot_dir}/var/run/{crm,mdadm,stunnel} || exit 1
 	${mkdir} -p ${chroot_dir}/var/lib/heartbeat/{cores,lrm} || exit 1
 	${mkdir} -p ${chroot_dir}/var/lib/scst/{pr,vdev_mode_pages} || exit 1
 	${mkdir} -p ${chroot_dir}/var/lib/stunnel || exit 1
@@ -130,10 +134,11 @@ if test -d "${chroot_dir}"; then
 	${mkdir} -p ${chroot_dir}/var/lib/esos || exit 1
 	${ln} -sf lib ${chroot_dir}/lib64 || exit 1
 	${ln} -sf lib ${chroot_dir}/usr/lib64 || exit 1
+	${ln} -sf lib ${chroot_dir}/usr/local/lib64 || exit 1
 	${mkdir} -p ${tools_dir}/lib || exit 1
 	${ln} -sf lib ${tools_dir}/lib64 || exit 1
-	${mkdir} -p ${initramfs_dir}/{bin,sbin,proc,sys,dev,tmp} || exit 1
-	${mkdir} -p ${initramfs_dir}/mnt/{root,tmp} || exit 1
+	${mkdir} -p ${initramfs_dir}/{bin,sbin,proc,sys,dev,tmp,etc} || exit 1
+	${mkdir} -p ${initramfs_dir}/mnt/{root,tmp,overlay} || exit 1
 	${mkdir} -p ${initramfs_dir}/usr/{bin,sbin} || exit 1
 	${mkdir} -p ${initramfs_dir}/lib/firmware || exit 1
 	${mkdir} -p ${initramfs_dir}/run/mdadm || exit 1
@@ -166,7 +171,8 @@ dnl Optional feature valgrind
 AC_ARG_ENABLE(valgrind,
 	AS_HELP_STRING([--enable-valgrind], [build and include valgrind]),
 	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
-	[enable_valgrind="${enableval}"], [enable_valgrind="no"]), enable_valgrind="no")
+	[enable_valgrind="${enableval}"], [enable_valgrind="no"]),
+	enable_valgrind="no")
 AS_IF([test "x$enable_valgrind" = "xyes"],
 	[build_opts="${build_opts} valgrind"; opt_suffix="${opt_suffix}v"])
 AC_SUBST(enable_valgrind, ${enable_valgrind})
@@ -182,26 +188,59 @@ AS_IF([test "x$enable_strace" = "xyes"],
 AC_SUBST(enable_strace, ${enable_strace})
 AC_MSG_NOTICE([strace: ${enable_strace}])
 
-dnl Optional feature qla
-AC_ARG_ENABLE(qla,
-	AS_HELP_STRING([--enable-qla],
-	[use the Cavium FC qla2xxx driver instead of the SCST in-tree driver]),
+dnl Optional feature nginx
+AC_ARG_ENABLE(nginx,
+	AS_HELP_STRING([--enable-nginx], [build and include nginx]),
 	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
-	[enable_qla="${enableval}"], [enable_qla="no"]), enable_qla="no")
-AS_IF([test "x$enable_qla" = "xyes"],
-	[build_opts="${build_opts} qla"; opt_suffix="${opt_suffix}q"])
-AC_SUBST(enable_qla, ${enable_qla})
-AC_MSG_NOTICE([qla: ${enable_qla}])
+	[enable_nginx="${enableval}"], [enable_nginx="no"]),
+	enable_nginx="no")
+AS_IF([test "x$enable_nginx" = "xyes"],
+	[build_opts="${build_opts} nginx"; opt_suffix="${opt_suffix}n"])
+AC_SUBST(enable_nginx, ${enable_nginx})
+AC_MSG_NOTICE([nginx: ${enable_nginx}])
+
+dnl Optional feature python_sql
+AC_ARG_ENABLE(python_sql,
+	AS_HELP_STRING([--enable-python_sql],
+	[build and include Python SQL modules]),
+	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
+	[enable_python_sql="${enableval}"], [enable_python_sql="no"]),
+	enable_python_sql="no")
+AS_IF([test "x$enable_python_sql" = "xyes"],
+	[build_opts="${build_opts} python_sql"; opt_suffix="${opt_suffix}p"])
+AC_SUBST(enable_python_sql, ${enable_python_sql})
+AC_MSG_NOTICE([python_sql: ${enable_python_sql}])
 
 dnl Optional feature zfs
 AC_ARG_ENABLE(zfs,
-	AS_HELP_STRING([--enable-zfs], [build and include ZFS]),
+	AS_HELP_STRING([--enable-zfs], [build and include ZFS on Linux]),
 	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
 	[enable_zfs="${enableval}"], [enable_zfs="no"]), enable_zfs="no")
 AS_IF([test "x$enable_zfs" = "xyes"],
 	[build_opts="${build_opts} zfs"; opt_suffix="${opt_suffix}z"])
 AC_SUBST(enable_zfs, ${enable_zfs})
 AC_MSG_NOTICE([zfs: ${enable_zfs}])
+
+dnl Optional feature lessfs
+AC_ARG_ENABLE(lessfs,
+	AS_HELP_STRING([--enable-lessfs], [build and include Lessfs]),
+	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
+	[enable_lessfs="${enableval}"], [enable_lessfs="no"]),
+	enable_lessfs="no")
+AS_IF([test "x$enable_lessfs" = "xyes"],
+	[build_opts="${build_opts} lessfs"; opt_suffix="${opt_suffix}l"])
+AC_SUBST(enable_lessfs, ${enable_lessfs})
+AC_MSG_NOTICE([lessfs: ${enable_lessfs}])
+
+dnl Optional feature qemu
+AC_ARG_ENABLE(qemu,
+	AS_HELP_STRING([--enable-qemu], [build and include QEMU]),
+	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
+	[enable_qemu="${enableval}"], [enable_qemu="no"]), enable_qemu="no")
+AS_IF([test "x$enable_qemu" = "xyes"],
+	[build_opts="${build_opts} qemu"; opt_suffix="${opt_suffix}V"])
+AC_SUBST(enable_qemu, ${enable_qemu})
+AC_MSG_NOTICE([qemu: ${enable_qemu}])
 
 dnl Optional feature mhvtl
 AC_ARG_ENABLE(mhvtl,
@@ -232,6 +271,16 @@ AS_IF([test "x$enable_btier" = "xyes"],
 	[build_opts="${build_opts} btier"; opt_suffix="${opt_suffix}b"])
 AC_SUBST(enable_btier, ${enable_btier})
 AC_MSG_NOTICE([btier: ${enable_btier}])
+
+dnl Optional feature memcached
+AC_ARG_ENABLE(memcached,
+	AS_HELP_STRING([--enable-memcached], [build and include memcached]),
+	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
+	[enable_memcached="${enableval}"], [enable_memcached="no"]), enable_memcached="no")
+AS_IF([test "x$enable_memcached" = "xyes"],
+	[build_opts="${build_opts} memcached"; opt_suffix="${opt_suffix}C"])
+AC_SUBST(enable_memcached, ${enable_memcached})
+AC_MSG_NOTICE([memcached: ${enable_memcached}])
 
 dnl Optional simple text-based user interface (TUI)
 AC_ARG_ENABLE(simple_tui,
@@ -266,16 +315,6 @@ dnl No build option / suffix (enabled by default)
 AC_SUBST(enable_tui_eula, ${enable_tui_eula})
 AC_MSG_NOTICE([tui_eula: ${enable_tui_eula}])
 
-dnl Optional usage count reporting in TUI
-AC_ARG_ENABLE(tui_usage,
-	AS_HELP_STRING([--disable-tui_usage], [disable the TUI usage prompt]),
-	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
-	[enable_tui_usage="${enableval}"], [enable_tui_usage="yes"]),
-	enable_tui_usage="yes")
-dnl No build option / suffix (enabled by default)
-AC_SUBST(enable_tui_usage, ${enable_tui_usage})
-AC_MSG_NOTICE([tui_usage: ${enable_tui_usage}])
-
 dnl Optional launch TUI at login
 AC_ARG_ENABLE(login_tui,
 	AS_HELP_STRING([--disable-login_tui], [disable the TUI on login]),
@@ -296,6 +335,17 @@ dnl No build option / suffix (enabled by default)
 AC_SUBST(enable_debug_kernel, ${enable_debug_kernel})
 AC_MSG_NOTICE([debug_kernel: ${enable_debug_kernel}])
 
+dnl Optional 32 Gb QLogic driver
+AC_ARG_ENABLE(qla32,
+	AS_HELP_STRING([--enable-qla32],
+	[use the QLogic 32 Gb FC driver instead of the original driver]),
+	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
+	[enable_qla32="${enableval}"], [enable_qla32="no"]), enable_qla32="no")
+AS_IF([test "x$enable_qla32" = "xyes"],
+	[build_opts="${build_opts} qla32"; opt_suffix="${opt_suffix}q"])
+AC_SUBST(enable_qla32, ${enable_qla32})
+AC_MSG_NOTICE([qla32: ${enable_qla32}])
+
 dnl Optional install authorized_keys file for root (SSH)
 AC_ARG_WITH(ssh_auth_key,
 	AS_HELP_STRING([--with-ssh_auth_key=FILE],
@@ -313,29 +363,6 @@ if test "x${with_ssh_auth_key}" = "xyes"; then
 fi
 AC_MSG_NOTICE([ssh_auth_key: ${with_ssh_auth_key}])
 
-dnl Optional package web_ui (user provides package file)
-AC_ARG_WITH(web_ui,
-	AS_HELP_STRING([--with-web_ui=PATH],
-	[build and include web_ui; PATH is the web_ui package file to use]),
-	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
-	[web_ui_file="${withval}"; with_web_ui="yes"],
-	[with_web_ui="no"]), with_web_ui="no")
-if test "x${with_web_ui}" = "xyes"; then
-	if test -f "${web_ui_file}"; then
-		AC_MSG_NOTICE([extracting the web_ui package file...])
-		web_ui_dir="${chroot_dir}/build/web_ui"
-		${mkdir} -p ${web_ui_dir} || exit 1
-		${tar} xfJ ${web_ui_file} --strip-components=1 -C ${web_ui_dir} || exit 1
-	else
-		AC_MSG_ERROR([unable to access the web_ui file: ${web_ui_file}])
-	fi
-fi
-AS_IF([test "x$with_web_ui" = "xyes"],
-	[build_opts="${build_opts} web_ui"; opt_suffix="${opt_suffix}w"])
-AC_SUBST(web_ui_dir, ${web_ui_dir})
-AC_SUBST(with_web_ui, ${with_web_ui})
-AC_MSG_NOTICE([web_ui: ${with_web_ui}])
-
 dnl Optional customization directory path (used by non-chroot Makefile)
 AC_ARG_WITH(customize_dir,
 	AS_HELP_STRING([--with-customize_dir=PATH],
@@ -347,6 +374,8 @@ if test "x${with_customize_dir}" = "xyes"; then
 	if test -d "${customize_dir}"; then
 		AC_MSG_NOTICE([copying overwrites.mk to build directory...])
 		${cp} -f ${customize_dir}/overwrites.mk ${chroot_dir}/build/ || exit 1
+		AC_MSG_NOTICE([copying addtl_targets.mk to build directory...])
+		${cp} -f ${customize_dir}/addtl_targets.mk ${chroot_dir}/build/ || exit 1
 	else
 		AC_MSG_ERROR([unable to access the customization directory: ${customize_dir}])
 	fi
@@ -354,57 +383,6 @@ fi
 AC_SUBST(customize_dir, ${customize_dir})
 AC_SUBST(with_customize_dir, ${with_customize_dir})
 AC_MSG_NOTICE([customize_dir: ${with_customize_dir}])
-
-dnl Optional package rpc_agent (user provides source directory)
-AC_ARG_WITH(rpc_agent,
-	AS_HELP_STRING([--with-rpc_agent=PATH],
-	[build and include rpc_agent; PATH is the rpc_agent source directory]),
-	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
-	[rpc_agent_path="${withval}"; with_rpc_agent="yes"],
-	[with_rpc_agent="no"]), with_rpc_agent="no")
-if test "x${with_rpc_agent}" = "xyes"; then
-	if test -d "${rpc_agent_path}"; then
-		AC_MSG_NOTICE([copying contents of the rpc_agent path...])
-		rpc_agent_dir="${chroot_dir}/build/rpc_agent"
-		${mkdir} -p ${rpc_agent_dir} || exit 1
-		${cp} -Rp ${rpc_agent_path}/* ${rpc_agent_dir}/ || exit 1
-	else
-		AC_MSG_ERROR([unable to access the rpc_agent path: ${rpc_agent_path}])
-	fi
-fi
-AS_IF([test "x$with_rpc_agent" = "xyes"],
-	[build_opts="${build_opts} rpc_agent"; opt_suffix="${opt_suffix}r"])
-AC_SUBST(rpc_agent_dir, ${rpc_agent_dir})
-AC_SUBST(with_rpc_agent, ${with_rpc_agent})
-AC_MSG_NOTICE([rpc_agent: ${with_rpc_agent}])
-
-dnl Optional OpenSSL DH key size for ESOS RPC Agent
-AC_ARG_WITH(ssl_key_size,
-	AS_HELP_STRING([--with-ssl_key_size=NUM],
-	[ESOS RPC Agent SSL key length; NUM is the size, 2048 is default]),
-	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
-	[key_length="${withval}"; with_ssl_key_size="yes"],
-	[with_ssl_key_size="no"]), with_ssl_key_size="no")
-AS_IF([test "x$with_ssl_key_size" = "xyes"],
-	[ssl_dh_key_size="${key_length}"], [ssl_dh_key_size="2048"])
-AC_SUBST(ssl_dh_key_size, ${ssl_dh_key_size})
-AC_MSG_NOTICE([ssl_dh_key_size: ${ssl_dh_key_size}])
-
-dnl Optional commerical edition of ESOS (Apache 2.0 is default)
-AC_ARG_ENABLE(commercial,
-	AS_HELP_STRING([--enable-commercial], [build the commercial edition]),
-	AS_IF([test "x${enableval}" = "xyes" || test "x${enableval}" = "xno"],
-	[enable_commercial="${enableval}"], [enable_commercial="no"]),
-	enable_commercial="no")
-if test "x${enable_commercial}" = "xyes"; then
-	if test "x${with_rpc_agent}" != "xyes"; then
-		AC_MSG_ERROR([the commercial edition requires the rpc_agent build option])
-	fi
-fi
-AS_IF([test "x$enable_commercial" = "xyes"],
-	[build_opts="${build_opts} commercial"; opt_suffix="${opt_suffix}C"])
-AC_SUBST(enable_commercial, ${enable_commercial})
-AC_MSG_NOTICE([commercial: ${enable_commercial}])
 
 dnl Optional package celerity_16_32 (user provides package file)
 AC_ARG_WITH(celerity_16_32,
@@ -464,7 +442,6 @@ AC_ARG_WITH(ocs_sdk,
 	[ocs_sdk_file="${withval}"; with_ocs_sdk="yes"],
 	[with_ocs_sdk="no"]), with_ocs_sdk="no")
 if test "x${with_ocs_sdk}" = "xyes"; then
-	AC_MSG_ERROR([support for Emulex OCS adapters is broken])
 	if test -f "${ocs_sdk_file}"; then
 		AC_MSG_NOTICE([extracting the ocs_sdk package file...])
 		ocs_sdk_dir="${chroot_dir}/build/ocs_sdk"
@@ -503,6 +480,124 @@ AS_IF([test "x$with_uwire" = "xyes"],
 AC_SUBST(uwire_dir, ${uwire_dir})
 AC_SUBST(with_uwire, ${with_uwire})
 AC_MSG_NOTICE([uwire: ${with_uwire}])
+
+dnl Optional package mlnx_ofed (user provides package file)
+AC_ARG_WITH(mlnx_ofed,
+	AS_HELP_STRING([--with-mlnx_ofed=PATH],
+	[build and include mlnx_ofed; PATH is the mlnx_ofed package file to use]),
+	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
+	[mlnx_ofed_file="${withval}"; with_mlnx_ofed="yes"],
+	[with_mlnx_ofed="no"]), with_mlnx_ofed="no")
+if test "x${with_mlnx_ofed}" = "xyes"; then
+	if test -f "${mlnx_ofed_file}"; then
+		AC_MSG_NOTICE([extracting the mlnx_ofed package file...])
+		mlnx_ofed_dir="${chroot_dir}/build/mlnx-ofa_kernel"
+		${mkdir} -p ${mlnx_ofed_dir} || exit 1
+		${tar} xfz ${mlnx_ofed_file} --strip-components=1 -C ${mlnx_ofed_dir} || exit 1
+	else
+		AC_MSG_ERROR([unable to access the mlnx_ofed file: ${mlnx_ofed_file}])
+	fi
+fi
+AS_IF([test "x$with_mlnx_ofed" = "xyes"],
+	[build_opts="${build_opts} mlnx_ofed"; opt_suffix="${opt_suffix}M"])
+AC_SUBST(mlnx_ofed_dir, ${mlnx_ofed_dir})
+AC_SUBST(with_mlnx_ofed, ${with_mlnx_ofed})
+AC_MSG_NOTICE([mlnx_ofed: ${with_mlnx_ofed}])
+
+dnl Optional package rapiddisk (user provides package file)
+AC_ARG_WITH(rapiddisk,
+	AS_HELP_STRING([--with-rapiddisk=PATH],
+	[build and include rapiddisk; PATH is the rapiddisk package file to use]),
+	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
+	[rapiddisk_file="${withval}"; with_rapiddisk="yes"],
+	[with_rapiddisk="no"]), with_rapiddisk="no")
+if test "x${with_rapiddisk}" = "xyes"; then
+	if test -f "${rapiddisk_file}"; then
+		AC_MSG_NOTICE([extracting the rapiddisk package file...])
+		rapiddisk_dir="${chroot_dir}/build/rapiddisk"
+		${mkdir} -p ${rapiddisk_dir} || exit 1
+		${tar} xfz ${rapiddisk_file} -C ${rapiddisk_dir} || exit 1
+	else
+		AC_MSG_ERROR([unable to access the rapiddisk file: ${rapiddisk_file}])
+	fi
+fi
+AS_IF([test "x$with_rapiddisk" = "xyes"],
+	[build_opts="${build_opts} rapiddisk"; opt_suffix="${opt_suffix}R"])
+AC_SUBST(rapiddisk_dir, ${rapiddisk_dir})
+AC_SUBST(with_rapiddisk, ${with_rapiddisk})
+AC_MSG_NOTICE([rapiddisk: ${with_rapiddisk}])
+
+dnl Optional package qla2xxx_scst (user provides package file)
+AC_ARG_WITH(qla2xxx_scst,
+	AS_HELP_STRING([--with-qla2xxx_scst=PATH],
+	[build and include qla2xxx_scst; PATH is the qla2xxx_scst package file to use]),
+	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
+	[qla2xxx_scst_file="${withval}"; with_qla2xxx_scst="yes"],
+	[with_qla2xxx_scst="no"]), with_qla2xxx_scst="no")
+if test "x${with_qla2xxx_scst}" = "xyes"; then
+	if test "x${enable_qla32}" = "xyes"; then
+		AC_MSG_ERROR([the qla32 option is not compatible with qla2xxx_scst, use one or the other])
+	fi
+	if test -f "${qla2xxx_scst_file}"; then
+		AC_MSG_NOTICE([extracting the qla2xxx_scst package file...])
+		qla2xxx_scst_dir="${chroot_dir}/build/qla2xxx_scst"
+		${mkdir} -p ${qla2xxx_scst_dir} || exit 1
+		${tar} xfz ${qla2xxx_scst_file} --strip-components=1 -C ${qla2xxx_scst_dir} || exit 1
+	else
+		AC_MSG_ERROR([unable to access the qla2xxx_scst file: ${qla2xxx_scst_file}])
+	fi
+fi
+AS_IF([test "x$with_qla2xxx_scst" = "xyes"],
+	[build_opts="${build_opts} qla2xxx_scst"; opt_suffix="${opt_suffix}Q"])
+AC_SUBST(qla2xxx_scst_dir, ${qla2xxx_scst_dir})
+AC_SUBST(with_qla2xxx_scst, ${with_qla2xxx_scst})
+AC_MSG_NOTICE([qla2xxx_scst: ${with_qla2xxx_scst}])
+
+dnl Optional package bnxt_en (user provides package file)
+AC_ARG_WITH(bnxt_en,
+	AS_HELP_STRING([--with-bnxt_en=PATH],
+	[build and include bnxt_en; PATH is the bnxt_en package file to use]),
+	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
+	[bnxt_en_file="${withval}"; with_bnxt_en="yes"],
+	[with_bnxt_en="no"]), with_bnxt_en="no")
+if test "x${with_bnxt_en}" = "xyes"; then
+	if test -f "${bnxt_en_file}"; then
+		AC_MSG_NOTICE([extracting the bnxt_en package file...])
+		bnxt_en_dir="${chroot_dir}/build/bnxt_en"
+		${mkdir} -p ${bnxt_en_dir} || exit 1
+		${tar} xfz ${bnxt_en_file} --strip-components=1 -C ${bnxt_en_dir} || exit 1
+	else
+		AC_MSG_ERROR([unable to access the bnxt_en file: ${bnxt_en_file}])
+	fi
+fi
+AS_IF([test "x$with_bnxt_en" = "xyes"],
+	[build_opts="${build_opts} bnxt_en"; opt_suffix="${opt_suffix}B"])
+AC_SUBST(bnxt_en_dir, ${bnxt_en_dir})
+AC_SUBST(with_bnxt_en, ${with_bnxt_en})
+AC_MSG_NOTICE([bnxt_en: ${with_bnxt_en}])
+
+dnl Optional package r8152 (user provides package file)
+AC_ARG_WITH(r8152,
+	AS_HELP_STRING([--with-r8152=PATH],
+	[build and include r8152; PATH is the r8152 package file to use]),
+	AS_IF([test "x${withval}" != "xyes" && test "x${withval}" != "xno"],
+	[r8152_file="${withval}"; with_r8152="yes"],
+	[with_r8152="no"]), with_r8152="no")
+if test "x${with_r8152}" = "xyes"; then
+	if test -f "${r8152_file}"; then
+		AC_MSG_NOTICE([extracting the r8152 package file...])
+		r8152_dir="${chroot_dir}/build/r8152"
+		${mkdir} -p ${r8152_dir} || exit 1
+		${tar} xfj ${r8152_file} --strip-components=1 -C ${r8152_dir} || exit 1
+	else
+		AC_MSG_ERROR([unable to access the r8152 file: ${r8152_file}])
+	fi
+fi
+AS_IF([test "x$with_r8152" = "xyes"],
+	[build_opts="${build_opts} r8152"; opt_suffix="${opt_suffix}r"])
+AC_SUBST(r8152_dir, ${r8152_dir})
+AC_SUBST(with_r8152, ${with_r8152})
+AC_MSG_NOTICE([r8152: ${with_r8152}])
 
 AS_IF([test "x${srcdir}" = "x."],
 	[real_src_dir="${PWD}"],

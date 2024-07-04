@@ -1,8 +1,9 @@
-/nbproject/
 /*.img
-/*.img.bz2
+/*.img.tar.bz2
 /*.zip
+/*.iso
 /dist_*.txt
+/VERSION
 /autom4te.cache/
 /configure
 /Makefile
@@ -14,6 +15,9 @@
 /tui/*.o
 /ChangeLog-*.txt
 /chroot_build.sh
+/bootstrap_info
+/bootstrap-*.tar.xz
+/bootstrap-*.checksum
 /binutils.pass1
 /gcc.pass1
 /gmp
@@ -55,3 +59,14 @@
 /automake
 /libtool
 /flex
+/zlib
+/libffi
+/Python
+/cmake
+/ninja
+/meson
+/setuptools
+/rsync
+/ocaml
+/findlib
+

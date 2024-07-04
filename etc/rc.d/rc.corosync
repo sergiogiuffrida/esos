@@ -4,6 +4,7 @@ source /etc/rc.d/common
 
 COROSYNC="/usr/sbin/corosync"
 COROSYNC_LOCK="/var/lock/corosync"
+RC_COROSYNC_LOGGER="/usr/bin/logger -t rc.corosync -p daemon.info"
 DFLT_OPTS=""
 
 check_args ${@}
@@ -34,12 +35,12 @@ start() {
 
 stop() {
     /bin/echo "Stopping corosync..."
-    /bin/kill -TERM $(/bin/pidof ${COROSYNC}) || exit 1
+    /usr/bin/kill -TERM $(/usr/bin/pidof ${COROSYNC}) || exit 1
     wait_for_stop ${COROSYNC} && /bin/rm -f ${COROSYNC_LOCK}
 }
 
 status() {
-    /bin/pidof ${COROSYNC} > /dev/null 2>&1
+    /usr/bin/pidof ${COROSYNC} > /dev/null 2>&1
     exit ${?}
 }
 

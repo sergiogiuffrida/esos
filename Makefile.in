@@ -29,7 +29,8 @@ SFDISK		:= @sfdisk@
 CAT		:= @cat@
 GREP		:= @grep@
 DD		:= @dd@
-MKFS		:= @mkfs@
+MKFS_VFAT	:= @mkfs_vfat@
+MKFS_EXT4	:= @mkfs_ext4@
 LN		:= @ln@ -sf
 MOUNT		:= @mount@
 UMOUNT		:= @umount@
@@ -50,41 +51,54 @@ ZIP		:= @zip@
 XZ		:= @xz@
 READLINK	:= @readlink@
 STRIP		:= @strip@
-BZIP2		:= @bzip2@
 GIT		:= @git@
 FLOCK		:= @flock@
 ZIC		:= @zic@
 MV		:= @mv@
+RSYNC		:= @rsync@
+MKSQUASHFS	:= @mksquashfs@
+RMDIR		:= @rmdir@
+CUT		:= @cut@
+TR		:= @tr@
+MOUNTPOINT	:= @mountpoint@
 
 enable_debug		:= @enable_debug@
 enable_gdb		:= @enable_gdb@
 enable_valgrind		:= @enable_valgrind@
 enable_strace		:= @enable_strace@
-enable_qla		:= @enable_qla@
+enable_nginx		:= @enable_nginx@
+enable_python_sql	:= @enable_python_sql@
 enable_zfs		:= @enable_zfs@
+enable_lessfs		:= @enable_lessfs@
+enable_qemu		:= @enable_qemu@
 enable_mhvtl		:= @enable_mhvtl@
 enable_eio		:= @enable_eio@
 enable_btier		:= @enable_btier@
+enable_memcached	:= @enable_memcached@
 enable_simple_tui	:= @enable_simple_tui@
 enable_auto_dhcp	:= @enable_auto_dhcp@
 enable_tui_eula		:= @enable_tui_eula@
-enable_tui_usage	:= @enable_tui_usage@
 enable_login_tui	:= @enable_login_tui@
 enable_debug_kernel	:= @enable_debug_kernel@
-enable_commercial	:= @enable_commercial@
-with_web_ui		:= @with_web_ui@
-web_ui_dir		:= $(subst $(CHROOT_DIR),,@web_ui_dir@)
-with_rpc_agent		:= @with_rpc_agent@
-rpc_agent_dir		:= $(subst $(CHROOT_DIR),,@rpc_agent_dir@)
-ssl_dh_key_size		:= @ssl_dh_key_size@
+enable_qla32		:= @enable_qla32@
 with_celerity_16_32	:= @with_celerity_16_32@
 celerity_16_32_dir	:= $(subst $(CHROOT_DIR),,@celerity_16_32_dir@)
 with_atto_scst		:= @with_atto_scst@
 atto_scst_dir		:= $(subst $(CHROOT_DIR),,@atto_scst_dir@)
 with_ocs_sdk		:= @with_ocs_sdk@
 ocs_sdk_dir		:= $(subst $(CHROOT_DIR),,@ocs_sdk_dir@)
+with_rapiddisk		:= @with_rapiddisk@
+rapiddisk_dir		:= $(subst $(CHROOT_DIR),,@rapiddisk_dir@)
 with_uwire		:= @with_uwire@
 uwire_dir		:= $(subst $(CHROOT_DIR),,@uwire_dir@)
+with_mlnx_ofed		:= @with_mlnx_ofed@
+mlnx_ofed_dir		:= $(subst $(CHROOT_DIR),,@mlnx_ofed_dir@)
+with_qla2xxx_scst	:= @with_qla2xxx_scst@
+qla2xxx_scst_dir	:= $(subst $(CHROOT_DIR),,@qla2xxx_scst_dir@)
+with_bnxt_en		:= @with_bnxt_en@
+bnxt_en_dir		:= $(subst $(CHROOT_DIR),,@bnxt_en_dir@)
+with_r8152		:= @with_r8152@
+r8152_dir		:= $(subst $(CHROOT_DIR),,@r8152_dir@)
 with_customize_dir	:= @with_customize_dir@
 customize_dir		:= @customize_dir@
 build_opts		:= @build_opts@
@@ -101,62 +115,65 @@ git_tag		:= $(shell if tag="$$($(GIT) --git-dir=$(SRC_DIR)/.git \
 		then echo -n "$$tag"; else echo -n ""; fi)
 rel_name	:= $(git_tag)$(opt_suffix)
 dev_name	:= $(git_branch)_$(git_hash)$(opt_suffix)
-esos_ver	:= $(if $(filter %.x,$(git_branch)),$(rel_name),$(dev_name))
+esos_ver	:= $(if $(git_tag),$(rel_name),$(dev_name))
+product		:= Enterprise Storage OS
+short_prod	:= ESOS
+pkg_name	:= esos
 prod_suffix	:= -esos.prod
 ifeq ($(enable_debug_kernel),yes)
 debug_suffix	:= -esos.debug
 endif
-ifeq ($(enable_commercial),yes)
-product = Quantum ESOS
-pkg_name = esos
-else
-product = ESOS OSS
-pkg_name = esos
-endif
 
 dist_files	= $(addprefix $(DIST_FILES_DIR)/, \
-		binutils-2.29.1.tar.xz \
-		gcc-7.4.0.tar.xz \
-		gmp-6.1.0.tar.bz2 \
-		mpfr-3.1.4.tar.bz2 \
-		mpc-1.0.3.tar.gz \
-		linux-4.14.91.tar.xz \
-		glibc-2.26.tar.xz \
-		tcl-8.6.7.tar.xz \
-		expect-5.45.tar.xz \
-		dejagnu-1.6.tar.gz \
-		check-0.11.0.tar.gz \
-		ncurses-6.0.tar.gz \
-		bash-4.4.tar.gz \
-		bison-3.0.4.tar.xz \
+		binutils-2.32.tar.xz \
+		gcc-9.1.0.tar.xz \
+		gmp-6.1.2.tar.xz \
+		mpfr-4.0.2.tar.xz \
+		mpc-1.1.0.tar.gz \
+		linux-5.4.229.tar.xz \
+		glibc-2.29.tar.xz \
+		tcl-8.6.9.tar.xz \
+		expect-5.45.4.tar.xz \
+		dejagnu-1.6.2.tar.gz \
+		check-0.12.0.tar.gz \
+		ncurses-6.1.tar.gz \
+		bash-5.1.8.tar.gz \
+		bison-3.3.2.tar.xz \
 		bzip2-1.0.6.tar.gz \
-		coreutils-8.27.tar.xz \
-		diffutils-3.6.tar.xz \
-		file-5.31.tar.gz \
+		coreutils-8.31.tar.xz \
+		diffutils-3.7.tar.xz \
+		file-5.36.tar.gz \
 		findutils-4.6.0.tar.gz \
-		gawk-4.1.4.tar.xz \
-		gettext-0.19.8.1.tar.xz \
-		grep-3.1.tar.xz \
-		gzip-1.8.tar.xz \
+		gawk-5.0.0.tar.xz \
+ 		gettext-0.19.8.1.tar.xz \
+		grep-3.3.tar.xz \
+		gzip-1.10.tar.xz \
 		m4-1.4.18.tar.xz \
-		make-4.2.1.tar.bz2 \
-		patch-2.7.5.tar.xz \
-		perl-5.26.0.tar.xz \
-		sed-4.4.tar.xz \
-		tar-1.29.tar.xz \
-		texinfo-6.4.tar.xz \
-		util-linux-2.30.1.tar.xz \
-		xz-5.2.3.tar.xz \
+		make-4.3.tar.gz \
+		patch-2.7.6.tar.xz \
+		perl-5.28.2.tar.xz \
+		sed-4.7.tar.xz \
+		tar-1.32.tar.xz \
+		texinfo-6.6.tar.xz \
+		util-linux-2.36.1.tar.xz \
+		xz-5.2.4.tar.xz \
 		pkg-config-0.29.2.tar.gz \
 		which-2.21.tar.gz \
 		autoconf-2.69.tar.xz \
-		automake-1.15.1.tar.xz \
-		libtool-2.4.6.tar.gz \
+		automake-1.16.1.tar.xz \
+		libtool-2.4.6.tar.xz \
 		flex-2.6.4.tar.gz \
+		Python-3.9.5.tar.xz \
+		cmake-3.14.4.tar.gz \
+		ninja-1.9.0.tar.gz \
+		meson-0.56.0.tar.gz \
+		setuptools-28.6.0.tar.gz \
+		ocaml-4.12.0.tar.gz \
+		findlib-1.9.1.tar.gz \
 		Linux-PAM-1.3.1.tar.xz \
-		busybox-1.26.2.tar.bz2 \
-		grub-2.02~rc1.tar.xz \
-		sysvinit-2.88dsf.tar.bz2 \
+		busybox-1.30.1.tar.bz2 \
+		grub-2.02.tar.xz \
+		sysvinit-2.94.tar.xz \
 		vixie-cron-4.1.tar.bz2 \
 		libibumad-1.3.10.2.tar.gz \
 		libibverbs-1.2.1.tar.gz \
@@ -169,155 +186,187 @@ dist_files	= $(addprefix $(DIST_FILES_DIR)/, \
 		libnes-1.1.4.tar.gz \
 		libocrdma-1.0.8.tar.gz \
 		srptools-1.0.3.tar.gz \
-		openssh-7.4p1.tar.gz \
+		openssh-8.7p1.tar.gz \
 		ssmtp-2.64.tar.bz2 \
-		openssl-1.0.2r.tar.gz \
-		e2fsprogs-1.43.3.tar.gz \
-		zlib-1.2.8.tar.xz \
-		lsscsi-0.28.tar.gz \
-		sg3_utils-1.44.tar.xz \
-		groff-1.22.3.tar.gz \
-		qlogic_fw-20190427.tar.gz \
-		iniparser-3.2.tar.gz \
+		openssl-1.1.1n.tar.gz \
+		e2fsprogs-1.45.1.tar.xz \
+		zlib-1.2.11.tar.xz \
+		lsscsi-030r154.tar.gz \
+		sg3_utils-1.48.tar.xz \
+		groff-1.22.4.tar.gz \
+		qlogic_fw-20230820.tar.xz \
+		iniparser-4.1.tar.gz \
 		cdk-5.0-20161210.tar.gz \
-		scst-3.3.x_r7994.tar.xz \
-		kexec-tools-2.0.17.tar.xz \
-		drbd-utils-9.8.0.tar.gz \
-		lvm2-2_02_168.tar.gz \
-		xfsprogs-4.10.0.tar.xz \
+		scst-3.7.x_20230120.tar.xz \
+		kexec-tools-2.0.19.tar.xz \
+		drbd-utils-9.16.0.tar.gz \
+		lvm2-2.03.14.tar.xz \
+		xfsprogs-4.20.0.tar.xz \
 		mdadm-4.1.tar.xz \
-		parted-3.1.tar.xz \
-		libqb-1.0.1.tar.xz \
-		pacemaker-1.1.16.tar.gz \
-		corosync-2.4.2.tar.gz \
-		nss-3.27.1.tar.gz \
-		glib-2.50.1.tar.xz \
-		libxml2-2.9.4.tar.gz \
-		libxslt-1.1.29.tar.gz \
-		Python-3.6.5.tar.xz \
+		parted-3.2.tar.xz \
+		libqb-2.0.6.tar.gz \
+		pacemaker-1.1.20.tar.xz \
+		corosync-2.4.6.tar.gz \
+		nss-3.43.tar.gz \
+		glib-2.61.0.tar.xz \
+		libxml2-2.9.9.tar.gz \
+		libxslt-1.1.33.tar.gz \
 		crmsh-master_20180520.tar.xz \
-		libaio-0.3.110-1.tar.xz \
+		libaio-0.3.111.tar.xz \
 		glue-1.0.12.tar.bz2 \
-		readline-6.3.tar.gz \
-		resource-agents-3.9.7.tar.gz \
-		lzo-2.09.tar.gz \
-		mhash-0.9.9.9.tar.bz2 \
-		lessfs-1.7.0.tar.gz \
-		tokyocabinet-1.4.48.tar.gz \
+		readline-8.0.tar.gz \
+		resource-agents-4.2.0.tar.gz \
+		lzo-2.10.tar.gz \
 		fuse-2.9.7.tar.gz \
 		db-5.3.28.tar.gz \
-		snappy-1.1.3.tar.gz \
-		fence-agents-4.2.0.tar.gz \
+		fence-agents-4.3.3.tar.gz \
 		opensm-3.3.20.tar.gz \
-		curl-7.50.3.tar.bz2 \
-		Net-Telnet-3.04.tar.gz \
+		curl-7.64.1.tar.xz \
 		open-fcoe-3.19.tar.gz \
 		open-lldp-0.9.46.tar.gz \
-		libconfig-1.5.tar.gz \
+		libconfig-1.7.2.tar.gz \
 		libnl-1.1.4.tar.gz \
-		libpciaccess-0.13.4.tar.bz2 \
-		linux_firmware-master_20180524.tar.xz \
-		dlm-4.0.7.tar.xz \
-		sysklogd-1.5.1.tar.gz \
-		ipmitool-1.8.17.tar.bz2 \
-		less-481.tar.gz \
-		irqbalance-master_20170901.tar.gz \
-		ethtool-4.8.tar.xz \
-		postgresql-9.6.0.tar.bz2 \
-		mysql-5.0.96.tar.gz \
+		libpciaccess-0.14.tar.bz2 \
+		linux_firmware-20190416.tar.xz \
+		dlm-4.0.8.tar.xz \
+		sysklogd-new_remote_opt_20190715.tar.xz \
+		ipmitool-1.8.18.tar.bz2 \
+		less-530.tar.gz \
+		irqbalance-1.8.0.tar.gz \
+		ethtool-5.0.tar.xz \
 		infiniband-diags-1.6.7.tar.gz \
-		libibmad-1.3.12.tar.gz \
-		perftest-3.4.tar.gz \
+		libibmad-1.3.13.tar.gz \
+		perftest-4.4-0.5.tar.xz \
 		bcache-tools-1.0.8.tar.gz \
-		nrpe-3.0.1.tar.gz \
-		thin-provisioning-tools-0.6.3.tar.gz \
-		expat-2.2.0.tar.bz2 \
-		boost-1_62_0.tar.bz2 \
+		nrpe-3.2.1.tar.gz \
+		thin-provisioning-tools-0.9.0.tar.gz \
+		expat-2.2.6.tar.bz2 \
+		boost-1.70.0.tar.xz \
 		librdmacm-1.1.0.tar.gz \
-		sysstat-11.5.1.tar.xz \
-		pciutils-3.5.2.tar.gz \
-		net-snmp-5.7.3.tar.gz \
+		sysstat-12.1.4.tar.xz \
+		pciutils-3.6.2.tar.xz \
+		net-snmp-5.8.tar.xz \
 		nut-2.7.4.tar.gz \
-		libusb-1.0.20.tar.bz2 \
-		libusb_compat-0.1.5.tar.bz2 \
-		freeipmi-1.5.4.tar.gz \
-		libgcrypt-1.7.3.tar.bz2 \
-		libgpg-error-1.24.tar.bz2 \
-		smartmontools-7.0.tar.gz \
-		cryptsetup-1.7.2.tar.xz \
+		libusb-1.0.22.tar.bz2 \
+		libusb_compat-0.1.7.tar.xz \
+		freeipmi-1.6.3.tar.gz \
+		libgcrypt-1.8.4.tar.bz2 \
+		libgpg-error-1.36.tar.bz2 \
+		smartmontools-7.4.tar.gz \
+		cryptsetup-1.7.5.tar.xz \
 		popt-1.16.tar.gz \
-		makedumpfile-1.6.4.tar.gz \
-		elfutils-0.170.tar.bz2 \
-		fio-2.18.tar.gz \
+		makedumpfile-1.6.7.tar.gz \
+		elfutils-0.176.tar.bz2 \
+		fio-3.13.tar.xz \
 		mtx-1.3.12.tar.gz \
 		mt-st-1.3.tar.gz \
-		nagios-plugins-2.1.2.tar.gz \
-		libedit-20160903-3.1.tar.gz \
+		nagios-plugins-2.2.1.tar.gz \
+		libedit-20190324-3.1.tar.gz \
 		libmcrypt-2.5.8.tar.bz2 \
-		nsca-2.7.2.tar.gz \
-		btrfs-progs-v4.8.1.tar.xz \
-		attr-2.4.47.tar.gz \
-		acl-2.2.52.tar.gz \
-		htop-2.0.2.tar.gz \
-		dmidecode-3.2.tar.xz \
-		xmlrpc-c-1.39.11.tar.gz \
+		nsca-2.9.2.tar.gz \
+		btrfs-progs-4.20.2.tar.xz \
+		attr-2.4.48.tar.gz \
+		acl-2.2.53.tar.gz \
+		htop-2.2.0.tar.gz \
+		dmidecode-3.4.tar.xz \
+		xmlrpc-c-1.39.13.tar.gz \
 		stunnel-5.53.tar.gz \
-		sudo-1.8.18p1.tar.gz \
-		rsync-3.1.2.tar.gz \
-		eudev-master_20180525.tar.xz \
-		gperf-3.0.4.tar.gz \
-		multipath-tools-0.7.7.tar.xz \
-		json-c-0.12.1.tar.gz \
-		archivemount-0.8.7.tar.gz \
-		libarchive-3.2.2.tar.gz \
-		rasdaemon-0.6.2.tar.bz2 \
+		sudo-1.8.27.tar.gz \
+		rsync-3.1.3.tar.gz \
+		eudev-3.2.7.tar.gz \
+		gperf-3.1.tar.gz \
+		multipath-tools-0.8.7.tar.gz \
+		json-c-0.13.1-20180305.tar.xz \
+		archivemount-0.8.12.tar.gz \
+		libarchive-3.3.3.tar.gz \
+		rasdaemon-0.6.5.tar.bz2 \
 		edac-utils-0.18.tar.gz \
 		sysfsutils-2.1.0.tar.gz \
-		sqlite-autoconf-3150000.tar.gz \
-		iperf2-2.0.9.tar.gz \
-		iperf3-3.1.3.tar.gz \
-		libpcap-1.7.4.tar.gz \
+		sqlite-autoconf-3280000.tar.gz \
+		iperf2-2.0.13.tar.xz \
+		iperf3-3.6.tar.xz \
+		libpcap-1.9.0.tar.gz \
 		iftop-1.0pre4.tar.gz \
-		nmon-16c.tar.gz \
-		munin-c-0.0.9.tar.gz \
-		open-iscsi-2.0.874.tar.gz \
-		open-isns-0.96.tar.gz \
-		open-vm-tools-10.0.7-3227872.tar.gz \
+		nmon-16j.tar.xz \
+		munin-c-0.0.13.tar.xz \
+		open-iscsi-2.1.1.tar.gz \
+		open-isns-0.99.tar.gz \
+		open-vm-tools-10.3.10-12406962.tar.gz \
 		libdnet-1.11.tar.gz \
 		libffi-3.2.1.tar.gz \
-		openwsman-2.6.5.tar.gz \
-		swig-3.0.10.tar.gz \
-		userspace-rcu-0.9.2.tar.bz2 \
-		tzdata-2016i.tar.gz \
-		nvme-cli-1.6.tar.gz \
-		freetype-2.7.tar.bz2 \
-		ledmon-0.80.tar.gz \
-		nvmetcli-master_20180523.tar.xz \
+		openwsman-2.7.0.tar.gz \
+		swig-4.0.0.tar.gz \
+		userspace-rcu-0.11.0.tar.bz2 \
+		tzdata-2019a.tar.xz \
+		nvme-cli-1.15.tar.gz \
+		freetype-2.10.0.tar.bz2 \
+		ledmon-0.92.tar.gz \
+		nvmetcli-master_20230519.tar.xz \
 		bc-1.07.1.tar.gz \
-		etckeeper-master_20171122.tar.xz \
-		git-2.9.5.tar.xz \
-		nfs-utils-2.2.1.tar.xz \
-		rpcbind-0.2.4.tar.bz2 \
-		libtirpc-1.0.2.tar.bz2 \
+		etckeeper-1.18.10.tar.gz \
+		git-2.21.0.tar.xz \
+		nfs-utils-2.3.4.tar.xz \
+		rpcbind-1.2.5.tar.bz2 \
+		libtirpc-1.1.4.tar.bz2 \
 		libevent-2.1.8-stable.tar.gz \
-		keyutils-1.5.10.tar.bz2 \
+		keyutils-1.6.tar.bz2 \
 		libnfsidmap-0.26.tar.bz2 \
-		hdparm-9.52.tar.gz \
+		hdparm-9.58.tar.gz \
 		kbd-2.0.4.tar.xz \
-		pcre-8.42.tar.gz \
-		nginx-1.14.0.tar.gz \
 		dosfstools-4.1.tar.xz \
 		lsof-4.91.tar.xz \
 		blktrace-master_20181015.tar.xz \
-		hwloc-2.0.2.tar.bz2 \
-		mstflint-4.11.0.tar.gz \
-		switchtec-kernel_20190301.tar.xz \
+		hwloc-2.0.3.tar.bz2 \
+		mstflint-4.11.0-3.tar.xz \
+		cls_switchtec-4.1.0_5.4_20220211.tar.xz \
 		lshw-B.02.18.tar.gz \
 		iozone3-487.tar.xz \
-		telegraf-1.9.5.tar.xz \
-		sbd-1.4.0.tar.gz \
+		telegraf-1.14.3_linux_amd64.tar.xz \
+		sbd-1.4.1.tar.gz \
 		screen-4.6.2.tar.gz \
 		lftp-4.8.4.tar.xz \
+		ndctl-65.tar.gz \
+		kmod-26.tar.xz \
+		docbook-xsl-nons-1.79.2.tar.bz2 \
+		acpid-2.0.31.tar.xz \
+		ibutils-1.5.7.tar.gz \
+		numactl-2.0.13.tar.gz \
+		iowatcher-master_20200318.tar.xz \
+		iotop-master_20200318.tar.xz \
+		node_exporter-1.3.1.linux-amd64.tar.xz \
+		libcap-2.36.tar.gz \
+		sedutil-master_20201026.tar.xz \
+		squashfs-tools-4.4-git.1.tar.gz \
+		prometheus-2.32.1.linux-amd64.tar.xz \
+		jq-1.6.tar.gz \
+		oniguruma-6.9.6.tar.gz \
+		procps-v3.3.16.tar.gz \
+		haveged-1.9.14.tar.gz \
+		msmtp-1.8.14.tar.xz \
+		gnutls-3.6.15.tar.xz \
+		nettle-3.6.tar.gz \
+		tcpdump-4.99.0.tar.gz \
+		vim-8.2.2562.tar.gz \
+		sdparm-1.11.tar.xz \
+		iproute2-5.9.0.tar.xz \
+		libmnl-1.0.4.tar.bz2 \
+		jansson-2.12.tar.bz2 \
+		pcre-8.43.tar.gz \
+		pv-1.6.6.tar.bz2 \
+		gptfdisk-1.0.8.tar.gz \
+		usbutils-014.tar.xz \
+		libvirtd_exporter-master_20210907.tar.xz \
+		wget-1.21.2.tar.gz \
+		cacerts-20210930.tar.xz \
+		mlnx-tools-5.2.0.tar.gz \
+		zip-3.0.tar.xz \
+		cpuset-1.6.tar.gz \
+		switchtec-user-3.0.tar.gz \
+		bwm-ng-0.6.3.tar.gz \
+		lz4-1.9.4.tar.gz \
+		minicom-2.8.tar.gz \
+		smp_utils-0.99.tar.xz \
+		sasutils-0.3.13.tar.gz \
 		win_binaries-20180813.tar.xz)
 dist_files_repo	= http://download.esos-project.com/dist_files
 
@@ -347,7 +396,8 @@ bootstrap_tgts	:= binutils.pass1 gcc.pass1 gmp mpfr mpc kernel_headers \
 		dejagnu check ncurses bash bison bzip2 coreutils diffutils \
 		file findutils gawk gettext grep gzip m4 make patch perl \
 		sed tar texinfo util-linux xz pkg-config which autoconf \
-		automake libtool flex
+		automake libtool flex zlib libffi Python cmake ninja meson \
+		setuptools rsync ocaml findlib
 
 # All targets which are built/installed in the chroot environment
 chroot_tgts	:= kernel_headers.chroot glibc.chroot gcc.chroot \
@@ -366,16 +416,15 @@ chroot_tgts	:= kernel_headers.chroot glibc.chroot gcc.chroot \
 		libqb.chroot pacemaker.chroot corosync.chroot nss.chroot \
 		glib.chroot libxml2.chroot libxslt.chroot bzip2.chroot \
 		crmsh.chroot libaio.chroot glue.chroot readline.chroot \
-		resource-agents.chroot lzo.chroot mhash.chroot lessfs.chroot \
-		tokyocabinet.chroot fuse.chroot db.chroot snappy.chroot \
-		fence-agents.chroot curl.chroot Net-Telnet.chroot fio.chroot \
+		resource-agents.chroot lzo.chroot fuse.chroot db.chroot \
+		fence-agents.chroot curl.chroot fio.chroot \
 		open-fcoe.chroot open-lldp.chroot libconfig.chroot \
 		libnl.chroot libpciaccess.chroot linux_firmware.chroot \
 		dlm.chroot ipmitool.chroot sysklogd.chroot less.chroot \
-		irqbalance.chroot ethtool.chroot postgresql.chroot \
-		mysql.chroot infiniband-diags.chroot libibmad.chroot \
-		perftest.chroot nrpe.chroot bcache-tools.chroot \
-		util-linux.chroot thin-provisioning-tools.chroot expat.chroot \
+		irqbalance.chroot ethtool.chroot infiniband-diags.chroot \
+		libibmad.chroot perftest.chroot nrpe.chroot \
+		bcache-tools.chroot util-linux.chroot \
+		thin-provisioning-tools.chroot expat.chroot \
 		boost.chroot librdmacm.chroot sysstat.chroot pciutils.chroot \
 		net-snmp.chroot nut.chroot libusb.chroot libusb_compat.chroot \
 		freeipmi.chroot libgcrypt.chroot libgpg-error.chroot \
@@ -396,36 +445,87 @@ chroot_tgts	:= kernel_headers.chroot glibc.chroot gcc.chroot \
 		libtool.chroot etckeeper.chroot git.chroot nfs-utils.chroot \
 		rpcbind.chroot libtirpc.chroot libevent.chroot \
 		keyutils.chroot libnfsidmap.chroot hdparm.chroot kbd.chroot \
-		pcre.chroot nginx.chroot dosfstools.chroot lsof.chroot \
-		blktrace.chroot hwloc.chroot mstflint.chroot lshw.chroot \
-		iozone3.chroot telegraf.chroot sbd.chroot screen.chroot \
-		lftp.chroot
+		dosfstools.chroot lsof.chroot blktrace.chroot hwloc.chroot \
+		mstflint.chroot lshw.chroot iozone3.chroot telegraf.chroot \
+		sbd.chroot screen.chroot lftp.chroot ndctl.chroot \
+		kmod.chroot docbook-xsl-nons.chroot acpid.chroot \
+		ibutils.chroot tcl.chroot numactl.chroot iowatcher.chroot \
+		iotop.chroot node_exporter.chroot libcap.chroot \
+		sedutil.chroot squashfs-tools.chroot prometheus.chroot \
+		jq.chroot oniguruma.chroot procps.chroot haveged.chroot \
+		msmtp.chroot gnutls.chroot nettle.chroot tcpdump.chroot \
+		vim.chroot sdparm.chroot iproute2.chroot libmnl.chroot \
+		file.chroot jansson.chroot pcre.chroot pv.chroot \
+		gptfdisk.chroot usbutils.chroot libvirtd_exporter.chroot \
+		xz.chroot wget.chroot cacerts.chroot mlnx-tools.chroot \
+		zip.chroot cpuset.chroot switchtec-user.chroot bwm-ng.chroot \
+		lz4.chroot minicom.chroot smp_utils.chroot sasutils.chroot
 
 # And finally these targets should be built without parallel execution
 system_tgts	:= bash.chroot findutils.chroot sed.chroot tar.chroot
 
 # Check if we should enable additional build options
 ifeq ($(enable_gdb),yes)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,gdb-8.0.1.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,gdb-10.2.tar.xz)
 	chroot_tgts += gdb.chroot
 endif
 ifeq ($(enable_valgrind),yes)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,valgrind-3.12.0.tar.bz2)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,valgrind-3.15.0.tar.bz2)
 	chroot_tgts += valgrind.chroot
 endif
 ifeq ($(enable_strace),yes)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,strace-4.19.tar.xz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,strace-5.1.tar.xz)
 	chroot_tgts += strace.chroot
 endif
-ifeq ($(enable_qla),yes)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,\
-	scst_qla2xxx_unified-master_20181008.tar.xz)
+ifeq ($(enable_nginx),yes)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,nginx-1.16.0.tar.gz)
+	chroot_tgts += nginx.chroot
+endif
+ifeq ($(enable_python_sql),yes)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,postgresql-9.6.13.tar.bz2)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,mysql-5.0.96.tar.gz)
+	chroot_tgts += postgresql.chroot
+	chroot_tgts += mysql.chroot
 endif
 ifeq ($(enable_zfs),yes)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,spl-0.7.4.tar.gz)
-	dist_files += $(addprefix $(DIST_FILES_DIR)/,zfs-0.7.4.tar.gz)
-	chroot_tgts += spl.chroot
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,zfs-0.8.3.tar.gz)
 	chroot_tgts += zfs.chroot
+endif
+ifeq ($(enable_lessfs),yes)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,lessfs-1.7.0.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,tokyocabinet-1.4.48.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,snappy-1.1.7.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,mhash-0.9.9.9.tar.bz2)
+	chroot_tgts += lessfs.chroot
+	chroot_tgts += tokyocabinet.chroot
+	chroot_tgts += snappy.chroot
+	chroot_tgts += mhash.chroot
+endif
+ifeq ($(enable_qemu),yes)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,qemu-5.2.0.tar.xz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,pixman-0.40.0.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,libvirt-6.10.0.tar.xz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,yajl-2.1.0.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,iptables-1.8.7.tar.bz2)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,libnftnl-1.1.9.tar.bz2)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,dnsmasq-2.84.tar.xz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,libguestfs-1.44.1.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,xorriso-1.5.4.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,augeas-1.12.0.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,hivex-1.3.21.tar.gz)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,guestfs_app-1.40.1.tar.xz)
+	chroot_tgts += qemu.chroot
+	chroot_tgts += pixman.chroot
+	chroot_tgts += libvirt.chroot
+	chroot_tgts += yajl.chroot
+	chroot_tgts += iptables.chroot
+	chroot_tgts += libnftnl.chroot
+	chroot_tgts += dnsmasq.chroot
+	chroot_tgts += libguestfs.chroot
+	chroot_tgts += xorriso.chroot
+	chroot_tgts += augeas.chroot
+	chroot_tgts += hivex.chroot
+	chroot_tgts += guestfs_app.chroot
 endif
 ifeq ($(enable_mhvtl),yes)
 	dist_files += $(addprefix $(DIST_FILES_DIR)/,\
@@ -442,23 +542,26 @@ ifeq ($(enable_btier),yes)
 	btier-1.3.11.tar.gz)
 	chroot_tgts += btier.chroot
 endif
+ifeq ($(enable_memcached),yes)
+	dist_files += $(addprefix $(DIST_FILES_DIR)/,\
+	memcached-1.6.17.tar.gz)
+	chroot_tgts += memcached.chroot
+endif
 ifeq ($(enable_simple_tui),yes)
 	tui_cpp_flags += -DSIMPLE_TUI
 endif
 ifeq ($(enable_tui_eula),yes)
 	tui_cpp_flags += -DEULA_PROMPT
 endif
-ifeq ($(enable_tui_usage),yes)
-	tui_cpp_flags += -DUSAGE_PROMPT
+ifeq ($(enable_qla32),yes)
+	qla_ini_dir=qla2x00t-32gbit
+	qla_dir=qla2x00t-32gbit/qla2x00-target
+else
+	qla_ini_dir=qla2x00t
+	qla_dir=qla2x00t/qla2x00-target
 endif
-ifeq ($(enable_commercial),yes)
-	tui_cpp_flags += -DCOMMERCIAL
-endif
-ifeq ($(with_web_ui),yes)
-	chroot_tgts += web_ui.chroot
-endif
-ifeq ($(with_rpc_agent),yes)
-	chroot_tgts += rpc_agent.chroot
+ifeq ($(with_qla2xxx_scst),yes)
+	chroot_tgts += qla2xxx_scst.chroot
 endif
 ifeq ($(with_celerity_16_32),yes)
 	chroot_tgts += celerity_16_32.chroot
@@ -471,6 +574,23 @@ ifeq ($(with_ocs_sdk),yes)
 endif
 ifeq ($(with_uwire),yes)
 	chroot_tgts += uwire.chroot
+endif
+ifeq ($(with_mlnx_ofed),yes)
+	chroot_tgts += mlnx_ofed.chroot
+endif
+ifeq ($(with_rapiddisk),yes)
+	chroot_tgts += rapiddisk.chroot
+endif
+
+# Handle additional targets via customization directory
+ifeq ($(in_chroot),no)
+  ifeq ($(with_customize_dir),yes)
+    include $(customize_dir)/addtl_targets.mk
+  endif
+else
+  ifeq ($(with_customize_dir),yes)
+    include addtl_targets.mk
+  endif
 endif
 
 # Common variables used throughout
@@ -495,10 +615,20 @@ tarball_src_dirs	= $(addprefix $(SOURCES_DIR)/,$(subst .tar.xz,,\
 			$(subst .tar.bz2,,$(subst .tar.gz,,\
 			$(notdir $(dist_files))))))
 img_file		:= $(BUILD_DIR)/$(pkg_name)-$(esos_ver).img
-bz2_img_file		:= $(img_file).bz2
-stable_img_file		:= $(BUILD_DIR)/$(pkg_name).img
+tar_bz2_img_file	:= $(img_file).tar.bz2
 esos_target		= x86_64-esos-linux-gnu
 temp_path		= /tools/bin:/bin:/usr/bin
+dist_file_names		= $(subst $(DIST_FILES_DIR)/,,$(dist_files))
+find_bs_dist_files	= $(filter $(basename $(bs_tgt))-%,$(dist_file_names))
+bootstrap_dist_files	= $(foreach bs_tgt,$(bootstrap_tgts),\
+			$(find_bs_dist_files))
+bootstrap_info_file	:= $(BUILD_DIR)/bootstrap_info
+bootstrap_md5		= $(shell $(MD5SUM) $(bootstrap_info_file) \
+			| awk '{ print $$1 }')
+bootstrap_repo		= http://download.esos-project.com/bootstrap
+bootstrap_base		= bootstrap-$(bootstrap_md5)
+bootstrap_tarball	= $(bootstrap_base).tar.xz
+bootstrap_checksum	= $(bootstrap_base).checksum
 
 # This is used in the chroot environment
 export PKG_CONFIG_PATH = /usr/lib/pkgconfig:/usr/share/pkgconfig
@@ -522,6 +652,14 @@ define no_chroot
 	  exit 1; \
 	fi
 endef
+define apply_pkg_patch
+	$(QUIET) if [ ! -d $(tgt_src_dir)/$(notdir $(tgt_src_dir)).patch ]; \
+	  then \
+	  $(PATCH) -d $(tgt_src_dir) -b \
+	  -B $(tgt_src_dir)/$(notdir $(tgt_src_dir)).patch/ -p1 < \
+	  $(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch; \
+	fi
+endef
 
 # Set the PATH variable for default goal or specific targets
 ifeq ($(MAKECMDGOALS),)
@@ -533,36 +671,38 @@ endif
 
 # all - The default goal; complete everything up to bootstrap'ing.
 all:
-	$(QUIET) if [ `whoami` = "root" ]; then \
-	  $(ECHO) "### This target cannot be made with the root user!"; \
-	  exit 1; \
-	fi
 	$(MAKE) -C $(BUILD_DIR) fetch
 	$(MAKE) -C $(BUILD_DIR) extract
+	$(MAKE) -C $(BUILD_DIR) pre_bootstrap
 	$(MAKE) -C $(BUILD_DIR) bootstrap
 
 
-# clean - Remove temporary files, any image/package files, and target files.
+# clean - Remove chroot directory files and any image/package files.
 .PHONY: clean
-clean: $(clean_bootstrap_tgts) $(clean_chroot_tgts) $(clean_system_tgts)
+clean: $(clean_chroot_tgts) $(clean_system_tgts)
 	$(QUIET) if $(MOUNT) | $(GREP) $(CHROOT_DIR) > /dev/null 2>&1; then \
 	  $(ECHO) "### One or more mounts still exist for chroot!"; \
 	  exit 1; \
 	fi
+	cd $(CHROOT_DIR) && $(FIND) . -maxdepth 1 ! -path "." \
+	! -path "./sources" ! -path "./build" ! -path "./tools" \
+	-exec $(RM) {} \;
+	$(RM) $(TOOLS_DIR)/lib/gcc/x86_64-pc-linux-gnu/$(gcc_ver)/specs
+	$(RM) $(chroot_build)/*
 	$(RM) $(INITRAMFS_DIR)/*
-	$(RM) $(CHROOT_DIR)/*
+	$(RM) $(SOURCES_DIR)/*
+	$(RM) $(BUILD_DIR)/VERSION
 	$(RM) $(BUILD_DIR)/dist_*.txt
 	$(RM) $(BUILD_DIR)/$(pkg_name)-*.zip
 	$(RM) $(BUILD_DIR)/$(pkg_name)-*.img
-	$(RM) $(BUILD_DIR)/$(pkg_name)-*.img.bz2
+	$(RM) $(BUILD_DIR)/$(pkg_name)-*.img.tar.bz2
 	$(RM) $(BUILD_DIR)/$(pkg_name)-*.iso
-	$(RM) $(BUILD_DIR)/$(pkg_name).img
 	$(RM) $(BUILD_DIR)/ChangeLog-*.txt
-	$(RM) $(BUILD_DIR)/chroot_build.sh
-
-$(clean_bootstrap_tgts):: target = $(subst clean-,,$(@))
-$(clean_bootstrap_tgts)::
-	$(RM) $(BUILD_DIR)/$(target)
+	$(QUIET) $(ECHO) && $(ECHO)
+	$(QUIET) $(ECHO) "### Successfully cleaned the chroot structure!"
+	$(QUIET) $(ECHO) && $(ECHO)
+	$(QUIET) $(ECHO) "### Run './configure' and 'make all' before" \
+	"building again..."
 
 $(clean_chroot_tgts):: target = $(subst clean-,,$(@))
 $(clean_chroot_tgts)::
@@ -578,9 +718,27 @@ clean-esos_tui.chroot::
 	fi
 
 
+# clean_bootstrap - Remove bootstrap target files and extracted sources.
+.PHONY: clean_bootstrap
+clean_bootstrap: $(clean_bootstrap_tgts)
+	$(RM) $(BUILD_DIR)/chroot_build.sh
+	$(RM) $(WORK_DIR)/kernel_headers
+	$(RM) $(WORK_DIR)/binutils-build
+	$(RM) $(WORK_DIR)/gcc-build
+	$(RM) $(WORK_DIR)/glibc-build
+	$(RM) $(WORK_DIR)/libstdc++-build
+
+$(clean_bootstrap_tgts):: target = $(subst clean-,,$(@))
+$(clean_bootstrap_tgts)::
+	$(RM) $(BUILD_DIR)/$(target)
+
+
 # distclean - Remove everything including build configuration settings.
 .PHONY: distclean
-distclean: clean
+distclean: clean clean_bootstrap
+	$(RM) $(bootstrap_info_file)
+	$(RM) $(BUILD_DIR)/$(bootstrap_tarball)
+	$(RM) $(BUILD_DIR)/$(bootstrap_checksum)
 	$(RM) $(WORK_DIR)
 	$(RM) $(SRC_DIR)/autom4te.cache
 	$(RM) $(BUILD_DIR)/config.status
@@ -649,22 +807,66 @@ symlink:
 	fi
 
 
+# pre_bootstrap - Fetch/extract a canned bootstrap archive if any exists.
+.PHONY: pre_bootstrap
+pre_bootstrap: $(bootstrap_info_file)
+	$(QUIET) if [ ! -e "$(WORK_DIR)/$(bootstrap_tarball)" ]; then \
+	  $(ECHO) "### Attempting to fetch a pre-built bootstrap..."; \
+	  if $(WGET) -P $(WORK_DIR) \
+	    $(bootstrap_repo)/$(bootstrap_tarball); then \
+	    if $(WGET) -P $(WORK_DIR) \
+	      $(bootstrap_repo)/$(bootstrap_checksum); then \
+	      cd $(WORK_DIR); \
+	      if $(SHA256SUM) -c $(bootstrap_checksum); then \
+	        $(ECHO) "### Extracting the pre-built bootstrap archive..."; \
+	        $(TAR) xfJ $(bootstrap_tarball) \
+	        --strip-components=1 -C $(BUILD_DIR); \
+	      else \
+	        $(RM) $(bootstrap_tarball); \
+	        $(RM) $(bootstrap_checksum); \
+	        exit 1; \
+	      fi; \
+	    else \
+	      $(RM) $(WORK_DIR)/$(bootstrap_checksum); \
+	    fi; \
+	  else \
+	    $(RM) $(WORK_DIR)/$(bootstrap_tarball); \
+	  fi; \
+	fi
+
+$(bootstrap_info_file):
+	$(QUIET) $(SED) --quiet \
+	'/^# bootstrap_tgts_start/,/^# bootstrap_tgts_end/p' \
+	$(BUILD_DIR)/Makefile > $(bootstrap_info_file)
+	$(QUIET) $(ECHO) "$(bootstrap_dist_files)" >> $(bootstrap_info_file)
+
+
 # bootstrap - Configure/compile/build the packages for chroot'ing.
 .PHONY: bootstrap
 bootstrap: symlink $(bootstrap_tgts)
+	$(QUIET) if [ ! -e "$(WORK_DIR)/$(bootstrap_tarball)" ] && \
+	  [ ! -e "$(BUILD_DIR)/$(bootstrap_tarball)" ]; then \
+	  $(ECHO) "### Generating a bootstrap archive..."; \
+	  cd $(BUILD_DIR) && \
+	  $(TAR) cfJ $(BUILD_DIR)/$(bootstrap_tarball) --hard-dereference \
+	  --transform 'flags=r;s,^,$(bootstrap_base)/,' $(bootstrap_tgts) \
+	  work/chroot/tools; \
+	  cd $(BUILD_DIR) && $(SHA256SUM) $(bootstrap_tarball) > \
+	  $(bootstrap_checksum); \
+	fi
 	$(CP) $(BUILD_DIR)/Makefile $(chroot_build)/
 	$(CP) -Rp $(SRC_DIR)/misc $(SRC_DIR)/tui $(chroot_build)/
 	$(ECHO) -n "$(if $(build_opts),$(build_opts),N/A)" > \
 	$(chroot_build)/build_opts
 	$(ECHO) -n "$(esos_ver)" > $(chroot_build)/esos_ver
 	$(ECHO) -n "$(git_branch)" > $(chroot_build)/git_branch
-	$(CP) /etc/passwd /etc/resolv.conf $(CHROOT_DIR)/etc/
+	$(CP) /etc/passwd /etc/group /etc/resolv.conf $(CHROOT_DIR)/etc/
 	$(QUIET) for i in bash cat dd echo ln pwd rm stty; do \
 	  if [ ! -e "$(CHROOT_DIR)/bin/$$i" ]; then \
 	    $(LN) -v /tools/bin/$$i $(CHROOT_DIR)/bin; \
 	  fi; \
 	done
-	$(QUIET) for i in install perl; do \
+	$(QUIET) for i in install perl env; do \
 	  if [ ! -e "$(CHROOT_DIR)/usr/bin/$$i" ]; then \
 	    $(LN) -v /tools/bin/$$i $(CHROOT_DIR)/usr/bin; \
 	  fi; \
@@ -682,20 +884,24 @@ bootstrap: symlink $(bootstrap_tgts)
 	$(QUIET) if [ ! -e "$(CHROOT_DIR)/bin/sh" ]; then \
 	  $(LN) -v bash $(CHROOT_DIR)/bin/sh; \
 	fi
-	$(ECHO) -e "#!/bin/sh\nmake pre_chroot\nchroot \
+	$(ECHO) -e "#!/bin/sh\ncleanup() {\n    make post_chroot\n}\n\
+	trap cleanup EXIT\nmake pre_chroot\nchroot \
 	--userspec=$(shell id -u):$(shell id -g) \
 	\"$(CHROOT_DIR)\" /build/build_all.sh \
-	\$$@\nchroot_exit=\$$?\nmake post_chroot\nexit \$$chroot_exit" > \
+	\$$@\nexit \$$?" > \
 	$(BUILD_DIR)/chroot_build.sh
 	$(CHMOD) +x $(BUILD_DIR)/chroot_build.sh
 	$(ECHO) -e "#!/bin/sh\n/tools/bin/env -i\nexport HOME=/\n\
 	export TERM=$$TERM\nexport PS1='\u:\w\$$ '\n\
 	export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin\n\
 	export LC_ALL=C\n\
+	export CFLAGS=\"-Os\"\n\
+	export CXXFLAGS=\"-Os\"\n\
 	/tools/bin/make \$$@ -C /build build" > \
 	$(chroot_build)/build_all.sh
 	$(CHMOD) +x $(chroot_build)/build_all.sh
 
+# bootstrap_tgts_start - DO NOT DELETE THIS LINE (used by pre_bootstrap)
 binutils.pass1:
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
@@ -707,6 +913,7 @@ binutils.pass1:
 	--disable-werror
 	$(MAKE) --directory=$(WORK_DIR)/binutils-build
 	$(MAKE) --directory=$(WORK_DIR)/binutils-build install
+	$(LN) -v lib /tools/lib64
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -743,22 +950,25 @@ gcc.pass1: binutils.pass1 gmp mpfr mpc
 
 gmp:
 	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call no_chroot)
-	$(LN) ../$(notdir $(tgt_src_dir)) $(gcc_src)/gmp
+	$(QUIET) if [ ! -h $(gcc_src)/gmp ]; then \
+	  $(LN) -v ../$(notdir $(tgt_src_dir)) $(gcc_src)/gmp; \
+	fi
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 mpfr:
 	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call no_chroot)
-	$(LN) ../$(notdir $(tgt_src_dir)) $(gcc_src)/mpfr
+	$(QUIET) if [ ! -h $(gcc_src)/mpfr ]; then \
+	  $(LN) -v ../$(notdir $(tgt_src_dir)) $(gcc_src)/mpfr; \
+	fi
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 mpc:
 	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call no_chroot)
-	$(LN) ../$(notdir $(tgt_src_dir)) $(gcc_src)/mpc
+	$(QUIET) if [ ! -h $(gcc_src)/mpc ]; then \
+	  $(LN) -v ../$(notdir $(tgt_src_dir)) $(gcc_src)/mpc; \
+	fi
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -781,8 +991,7 @@ glibc: binutils.pass1 gcc.pass1 kernel_headers
 	cd $(WORK_DIR)/glibc-build && \
 	$(tgt_src_dir)/configure --prefix=/tools --host=$(esos_target) \
 	--build=$$($(tgt_src_dir)/scripts/config.guess) \
-	--enable-kernel=3.2 --with-headers=/tools/include \
-	libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes
+	--enable-kernel=3.2 --with-headers=/tools/include
 	$(MAKE) --directory=$(WORK_DIR)/glibc-build
 	$(MAKE) --directory=$(WORK_DIR)/glibc-build install
 	$(TOUCH) $(@)
@@ -818,7 +1027,7 @@ binutils.pass2: gcc.libstdc++
 	$(MAKE) --directory=$(WORK_DIR)/binutils-build/ld clean
 	$(MAKE) --directory=$(WORK_DIR)/binutils-build/ld \
 	LIB_PATH=/usr/lib:/lib
-	$(CP) -v $(WORK_DIR)/binutils-build/ld/ld-new /tools/bin/
+	$(CP) -f $(WORK_DIR)/binutils-build/ld/ld-new /tools/bin/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -864,6 +1073,8 @@ tcl: make
 	$(CHMOD) -v u+w /tools/lib/libtcl8.6.so
 	$(MAKE) --directory=$(tgt_src_dir)/unix install-private-headers
 	$(LN) -v tclsh8.6 /tools/bin/tclsh
+	$(RM) $(tgt_src_dir)
+	$(MAKE) --directory=$(BUILD_DIR) extract
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -909,6 +1120,7 @@ ncurses: make
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(MAKE) --directory=$(tgt_src_dir) distclean
+	$(LN) -v libncursesw.so /tools/lib/libncurses.so
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -945,8 +1157,8 @@ bzip2: make
 coreutils: make perl
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
-	cd $(tgt_src_dir) && ./configure --prefix=/tools \
-	--enable-install-program=hostname
+	cd $(tgt_src_dir) && FORCE_UNSAFE_CONFIGURE=1 ./configure \
+	--prefix=/tools --enable-install-program=hostname
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(MAKE) --directory=$(tgt_src_dir) distclean
@@ -974,6 +1186,15 @@ file: make
 findutils: make
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
+	$(QUIET) if ! $(GREP) -q _IO_IN_BACKUP \
+	  $(tgt_src_dir)/gl/lib/stdio-impl.h; then \
+	  $(SED) -i 's/IO_ftrylockfile/IO_EOF_SEEN/' \
+	  $(tgt_src_dir)/gl/lib/*.c; \
+	  $(ECHO) "#define _IO_IN_BACKUP 0x100" >> \
+	  $(tgt_src_dir)/gl/lib/stdio-impl.h; \
+	  $(SED) -i '/unistd/a #include <sys/sysmacros.h>' \
+	  $(tgt_src_dir)/gl/lib/mountlist.c; \
+	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/tools
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -1001,6 +1222,8 @@ gettext: make
 	$(MAKE) --directory=$(tgt_src_dir)/gettext-tools/src xgettext
 	$(CP) -v $(tgt_src_dir)/gettext-tools/src/{msgfmt,msgmerge,xgettext} \
 	/tools/bin/
+	$(MAKE) --directory=$(tgt_src_dir)/gettext-tools/misc
+	$(MAKE) --directory=$(tgt_src_dir)/gettext-tools/misc install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -1025,6 +1248,12 @@ gzip: make
 m4: make
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
+	$(QUIET) if ! $(GREP) -q _IO_IN_BACKUP \
+	  $(tgt_src_dir)/lib/stdio-impl.h; then \
+	  $(SED) -i 's/IO_ftrylockfile/IO_EOF_SEEN/' $(tgt_src_dir)/lib/*.c; \
+	  $(ECHO) "#define _IO_IN_BACKUP 0x100" >> \
+	  $(tgt_src_dir)/lib/stdio-impl.h; \
+	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/tools
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -1034,8 +1263,7 @@ m4: make
 make: gcc.pass2
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
-	cd $(tgt_src_dir) && ./configure --prefix=/tools \
-	--without-guile
+	cd $(tgt_src_dir) && ./configure --prefix=/tools --without-guile
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -1053,15 +1281,13 @@ patch: make
 perl: make
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
-	$(SED) -e '9751 a#ifndef PERL_IN_XSUB_RE' \
-	-e '9808 a#endif' -i $(tgt_src_dir)/regexec.c
-	cd $(tgt_src_dir) && sh Configure -des \
-	-Dprefix=/tools -Dlibs=-lm
-	$(MAKE) --directory=$(tgt_src_dir)
+	cd $(tgt_src_dir) && sh Configure -des -Dprefix=/tools \
+	-Dlibs=-lm -Uloclibpth -Ulocincpth
+	$(MAKE) --directory=$(tgt_src_dir) MAKE=$(MAKE)
 	$(CP) -v $(tgt_src_dir)/perl \
 	$(tgt_src_dir)/cpan/podlators/scripts/pod2man /tools/bin/
-	$(MKDIR) -v /tools/lib/perl5/5.26.0
-	$(CP) -Rfv $(tgt_src_dir)/lib/* /tools/lib/perl5/5.26.0/
+	$(MKDIR) -v /tools/lib/perl5/5.28.2
+	$(CP) -Rfv $(tgt_src_dir)/lib/* /tools/lib/perl5/5.28.2/
 	$(RM) $(tgt_src_dir)
 	$(MAKE) --directory=$(BUILD_DIR) extract
 	$(TOUCH) $(@)
@@ -1080,7 +1306,8 @@ sed: make
 tar: make
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
-	cd $(tgt_src_dir) && ./configure --prefix=/tools
+	cd $(tgt_src_dir) && FORCE_UNSAFE_CONFIGURE=1 ./configure \
+	--prefix=/tools
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(MAKE) --directory=$(tgt_src_dir) distclean
@@ -1096,7 +1323,7 @@ texinfo: make perl
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-util-linux: make
+util-linux: make ncurses
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call no_chroot)
 	cd $(tgt_src_dir) && ./configure --prefix=/tools \
@@ -1114,6 +1341,7 @@ xz: make
 	cd $(tgt_src_dir) && ./configure --prefix=/tools
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
+	$(MAKE) --directory=$(tgt_src_dir) distclean
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -1177,17 +1405,133 @@ flex: make
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
+zlib: make
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./configure --prefix=/tools
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(MAKE) --directory=$(tgt_src_dir) distclean
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libffi: make
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./configure --prefix=/tools
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(MAKE) --directory=$(tgt_src_dir) distclean
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+Python: make zlib libffi
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	$(QUIET) if [ ! -f $(tgt_src_dir)/setup.py.orig ]; then \
+	  $(CP) $(tgt_src_dir)/setup.py $(tgt_src_dir)/setup.py.orig; \
+	  $(SED) -i '/def add_multiarch_paths/a \        return' \
+	  $(tgt_src_dir)/setup.py; \
+	fi
+	cd $(tgt_src_dir) && PKG_CONFIG_PATH=/tools/lib/pkgconfig \
+	./configure --prefix=/tools --without-ensurepip --with-system-ffi
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(MV) $(tgt_src_dir)/setup.py.orig $(tgt_src_dir)/setup.py
+	- $(MAKE) --directory=$(tgt_src_dir) distclean
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+cmake: make
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./bootstrap --prefix=/tools --no-system-libs \
+	--verbose -- -DCMAKE_USE_OPENSSL:BOOL=OFF \
+	-DCURSES_INCLUDE_PATH:PATH=/tools/include \
+	-DGTK2_FONTCONFIG_INCLUDE_DIR:PATH=/tools/include \
+	-DGTK2_X11_INCLUDE_DIR:PATH=/tools/include \
+	-DQT_HEADERS_DIR:INTERNAL=/tools/include
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+ninja: Python
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && python3 configure.py --bootstrap
+	$(INSTALL) -m 0755 $(tgt_src_dir)/ninja /tools/bin/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+meson: Python setuptools
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && python3 setup.py build
+	cd $(tgt_src_dir) && python3 setup.py install --root=/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+setuptools: Python
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && python3 setup.py install --prefix=/tools
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+rsync: make
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./configure --prefix=/tools
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(MAKE) --directory=$(tgt_src_dir) distclean
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+ocaml: make
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./configure --prefix=/tools
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+findlib: make ocaml
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call no_chroot)
+	cd $(tgt_src_dir) && ./configure
+	$(MAKE) --directory=$(tgt_src_dir) all
+	$(MAKE) --directory=$(tgt_src_dir) opt
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+# bootstrap_tgts_end - DO NOT DELETE THIS LINE (used by pre_bootstrap)
+
 
 # pre_chroot - Setup everything before entering the chroot environment.
 .PHONY: pre_chroot
 pre_chroot:
 	$(call check_if_root)
-	$(QUIET) $(MOUNT) -v --bind /dev $(CHROOT_DIR)/dev
-	$(QUIET) $(MOUNT) -vt devpts devpts $(CHROOT_DIR)/dev/pts \
-	-o gid=5,mode=620
-	$(QUIET) $(MOUNT) -vt proc proc $(CHROOT_DIR)/proc
-	$(QUIET) $(MOUNT) -vt sysfs sysfs $(CHROOT_DIR)/sys
-	$(QUIET) $(MOUNT) -vt tmpfs tmpfs $(CHROOT_DIR)/run
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/dev; then \
+	  $(MOUNT) -v --bind /dev $(CHROOT_DIR)/dev; \
+	fi
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/dev/shm; then \
+	  $(MOUNT) -v --bind /dev/shm $(CHROOT_DIR)/dev/shm; \
+	fi
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/dev/pts; then \
+	  $(MOUNT) -vt devpts devpts $(CHROOT_DIR)/dev/pts -o gid=5,mode=620; \
+	fi
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/proc; then \
+	  $(MOUNT) -vt proc proc $(CHROOT_DIR)/proc; \
+	fi
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/sys; then \
+	  $(MOUNT) -vt sysfs sysfs $(CHROOT_DIR)/sys; \
+	fi
+	$(QUIET) set -e; if ! $(MOUNTPOINT) -q $(CHROOT_DIR)/run; then \
+	  $(MOUNT) -vt tmpfs tmpfs $(CHROOT_DIR)/run; \
+	fi
 
 
 # build - Configure/compile/build all of the required projects.
@@ -1211,6 +1555,7 @@ glibc.chroot: gcc_inc_dir = /usr/lib/gcc/x86_64-pc-linux-gnu/$(gcc_ver)/include
 glibc.chroot: kernel_headers.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	$(LN) -v /tools/lib/gcc /usr/lib
 	$(LN) -v ../lib/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 	$(RM) /usr/include/limits.h
@@ -1226,12 +1571,14 @@ glibc.chroot: kernel_headers.chroot
 	$(SED) '/test-installation/s@$$(PERL)@echo not running@' -i \
 	$(tgt_src_dir)/Makefile
 	$(MAKE) --directory=$(chroot_build)/glibc-build install
+	$(CP) -v $(chroot_build)/misc/glibc.SUPPORTED.locales \
+	$(tgt_src_dir)/localedata/SUPPORTED
 	$(MAKE) --directory=$(chroot_build)/glibc-build \
 	localedata/install-locales
-	$(MV) -v /tools/bin/{ld,ld-old}
-	$(MV) -v /tools/x86_64-pc-linux-gnu/bin/{ld,ld-old}
-	$(MV) -v /tools/bin/{ld-new,ld}
-	$(LN) -v /tools/bin/ld /tools/x86_64-pc-linux-gnu/bin/ld
+	$(CP) -f /tools/bin/{ld,ld-old}
+	$(CP) -f /tools/x86_64-pc-linux-gnu/bin/{ld,ld-old}
+	$(CP) -f /tools/bin/{ld-new,ld}
+	$(LN) /tools/bin/ld /tools/x86_64-pc-linux-gnu/bin/ld
 	$(CC) -dumpspecs | $(SED) -e 's@/tools@@g' \
 	-e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
 	-e '/\*cpp:/{n;s@$$@ -isystem /usr/include@}' > \
@@ -1239,7 +1586,7 @@ glibc.chroot: kernel_headers.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-gcc.chroot: glibc.chroot
+gcc.chroot: glibc.chroot gmp mpfr mpc
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(RM) $(chroot_build)/gcc-build
@@ -1259,18 +1606,29 @@ gcc.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 esos_kernels.chroot: kernel_ver = $(subst linux-,,$(notdir $(linux_src)))
-esos_kernels.chroot: qla2xxx_src = $(wildcard /sources/scst_qla2xxx_unified-*)
 esos_kernels.chroot: mhvtl_src = $(wildcard /sources/mhvtl-*)
 esos_kernels.chroot: eio_src = $(wildcard /sources/EnhanceIO-*)
 esos_kernels.chroot: btier_src = $(wildcard /sources/btier-*)
-esos_kernels.chroot: spl_src = $(wildcard /sources/spl-*)
 esos_kernels.chroot: zfs_src = $(wildcard /sources/zfs-*)
-esos_kernels.chroot: switchtec_src = $(wildcard /sources/switchtec-*)
+esos_kernels.chroot: switchtec_src = $(wildcard /sources/cls_switchtec-*)
+esos_kernels.chroot: cls_base = $(switchtec_src)/Driver/Switchtec
+esos_kernels.chroot: switchtec_kern = switchtec-kernel-release_4.19
+esos_kernels.chroot: cls_switchtec = $(cls_base)/$(switchtec_kern)
+ifneq ($(wildcard $(chroot_build)/esos_ver),)
+esos_kernels.chroot: esos_ver := $(shell head -1 $(chroot_build)/esos_ver)
+endif
 esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
-	glibc.chroot gcc.chroot util-linux.chroot attr.chroot pciutils.chroot
+	glibc.chroot gcc.chroot util-linux.chroot attr.chroot pciutils.chroot \
+	openssl.chroot libcap.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --directory=$(linux_src)/tools/perf
+	$(QUIET) if [ ! -d $(linux_src)/$(notdir $(linux_src)).patch ]; then \
+	  $(PATCH) -d $(linux_src) -b \
+	  -B $(linux_src)/$(notdir $(linux_src)).patch/ -p1 < \
+	  $(chroot_build)/misc/$(notdir $(linux_src)).patch; \
+	fi
+	$(MAKE) --directory=$(linux_src)/tools/perf \
+	EXTRA_CFLAGS="-Wno-stringop-truncation"
 	$(INSTALL) -m 0755 $(linux_src)/tools/perf/perf /usr/bin/perf
 	$(MAKE) --directory=$(linux_src)/tools/power/x86/\
 	x86_energy_perf_policy install
@@ -1279,22 +1637,48 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	$(SED) -i 's/\/bin\/true/true/' \
 	$(linux_src)/tools/power/cpupower/Makefile
 	$(MAKE) --directory=$(linux_src)/tools/power/cpupower
-	$(MAKE) --directory=$(linux_src)/tools/power/cpupower install
+	$(MAKE) --directory=$(linux_src)/tools/power/cpupower \
+	mandir=/usr/share/man install
 	$(QUIET) set -e; for i in $(prod_suffix) $(debug_suffix); do \
 	  $(ECHO) "### Cleaning source directories..."; \
 	  $(MAKE) --directory=$(linux_src) clean; \
 	  $(MAKE) --directory=$(linux_src) mrproper; \
 	  $(MAKE) --directory=$(linux_src) distclean; \
-	  $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	  KDIR=$(linux_src) clean; \
-	  $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	  KDIR=$(linux_src) extraclean; \
-	  if [ "$(enable_qla)" = "yes" ]; then \
+	  if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	    if [ -e "$(mlnx_ofed_dir)/configure.mk.kernel" ]; then \
+	      $(MAKE) --directory=$(mlnx_ofed_dir) clean; \
+	    fi; \
+	    $(CAT) $(mlnx_ofed_dir)/mlnx-ofa_kernel.spec | \
+	    $(GREP) "global _version" | $(CUT) -d' ' -f4 | $(TR) -d '}' > \
+	    $(mlnx_ofed_dir)/MOFED_VERSION; \
+	    $(SED) -i '/MLNX OFED has not been installed/c\\tOFED_VERS=$$(shell head -1 $(mlnx_ofed_dir)/MOFED_VERSION)' \
+	    $(scst_src)/iscsi-scst/Makefile; \
+	    $(SED) -i 's,/usr/src/ofa_kernel/default,$(mlnx_ofed_dir),' \
+	    $(scst_src)/iscsi-scst/kernel/isert-scst/Kbuild; \
+	    $(SED) -i 's,/usr/src/ofa_kernel/default,$(mlnx_ofed_dir),' \
+	    $(scst_src)/srpt/src/Kbuild; \
+	    $(SED) -i 's/UTS_RELEASE/ESOS_VERSION/g' \
+	    $(mlnx_ofed_dir)/drivers/nvme/target/{core,discovery}.c; \
+	    $(SED) -i 's/id->anatt = 10;/id->anatt = 60;/' \
+	    $(mlnx_ofed_dir)/drivers/nvme/target/admin-cmd.c; \
+	  fi; \
+	  if [ "$(with_qla2xxx_scst)" = "yes" ]; then \
+	    if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	      if ! $(GREP) -q "$(mlnx_ofed_dir)" "$(qla2xxx_scst_dir)/Makefile"; then \
+	        $(SED) "0,/^EXTRA_CFLAGS.*/s,^EXTRA_CFLAGS.*,LINUXINCLUDE := -I$(mlnx_ofed_dir)/include -I$(mlnx_ofed_dir)/include/uapi -include $(mlnx_ofed_dir)/include/linux/compat-2.6.h $$\(LINUXINCLUDE\)\n&," -i $(qla2xxx_scst_dir)/Makefile; \
+	      fi; \
+	      $(SED) '/-DRHEL_8_4/s/^#//' -i $(qla2xxx_scst_dir)/Makefile; \
+	    fi; \
+	    $(SED) -i '/obj-m/s/tcm_qla2xxx.o/scst_qla2xxx.o/' \
+	    $(qla2xxx_scst_dir)/Makefile; \
+	    $(MAKE) --directory=$(qla2xxx_scst_dir) KVER=$(kernel_ver)$$i \
+	    KDIR=$(linux_src) SCST_INC_DIR=$(scst_src)/scst/include clean; \
+	  else \
 	    $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	    KDIR=$(linux_src) QLA_DIR=qla2x00t_git/qla2xxx-unified-target \
+	    KDIR=$(linux_src) QLA_INI_DIR=$(qla_ini_dir) QLA_DIR=$(qla_dir) \
 	    clean; \
 	    $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	    KDIR=$(linux_src) QLA_DIR=qla2x00t_git/qla2xxx-unified-target \
+	    KDIR=$(linux_src) QLA_INI_DIR=$(qla_ini_dir) QLA_DIR=$(qla_dir) \
 	    extraclean; \
 	  fi; \
 	  if [ "$(enable_mhvtl)" = "yes" ]; then \
@@ -1310,10 +1694,7 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    $(MAKE) --directory=$(btier_src)/kernel/btier clean; \
 	  fi; \
 	  if [ "$(with_celerity_16_32)" = "yes" ]; then \
-	    $(SED) -i 's/@depmod/#depmod/' \
-	    $(celerity_16_32_dir)/src/Makefile; \
-	    $(MAKE) --directory=$(celerity_16_32_dir)/src KDIR=$(linux_src) \
-	    FULL_KERNEL_VERSION=$(kernel_ver)$$i DRIVER_NAME=celerity16fc \
+	    $(MAKE) --directory=$(linux_src) M=$(celerity_16_32_dir)/src \
 	    clean; \
 	  fi; \
 	  if [ "$(with_atto_scst)" = "yes" ]; then \
@@ -1321,11 +1702,15 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    $(atto_scst_dir)/Makefile; \
 	    $(SED) -i 's/-m 0744 -o root -g root/-m 0644/g' \
 	    $(atto_scst_dir)/Makefile; \
-	    $(SED) -i 's/depmod/#depmod/' \
+	    $(SED) -i 's/depmod/true/' \
+	    $(atto_scst_dir)/Makefile; \
+	    $(SED) -i 's/SUBDIRS=/M=/' \
 	    $(atto_scst_dir)/Makefile; \
 	    $(MAKE) --directory=$(atto_scst_dir) clean; \
 	  fi; \
 	  if [ "$(with_ocs_sdk)" = "yes" ]; then \
+	    $(SED) -i 's/-Werror//' \
+	    $(ocs_sdk_dir)/driver/linux/ocs_fc_scst/Makefile; \
 	    $(MAKE) --directory=$(linux_src) \
 	    M=$(ocs_sdk_dir)/driver/linux/ocs_fc_scst clean; \
 	  fi; \
@@ -1337,25 +1722,37 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    FIRMWARE_PATH="$(uwire_dir)/src/network/firmware" \
 	    KDIR=$(linux_src) clean; \
 	  fi; \
+	  if [ "$(with_bnxt_en)" = "yes" ]; then \
+	    $(MAKE) --directory=$(bnxt_en_dir) KDIR=$(linux_src) clean; \
+	  fi; \
+	  if [ "$(with_r8152)" = "yes" ]; then \
+	    $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+	    M=$(r8152_dir) clean; \
+	  fi; \
+	  if [ "$(with_rapiddisk)" = "yes" ]; then \
+	    $(MAKE) --directory=$(rapiddisk_dir)/rapiddisk-master/module \
+	    clean; \
+	  fi; \
 	  if [ "$(enable_zfs)" = "yes" ] && [ "$$i" = "$(prod_suffix)" ]; then \
-	    if [ -f "$(spl_src)/Makefile" ]; then \
-	      $(MAKE) --directory=$(spl_src) distclean; \
-	    fi; \
 	    if [ -f "$(zfs_src)/Makefile" ]; then \
 	      $(MAKE) --directory=$(zfs_src) distclean; \
 	    fi; \
 	  fi; \
-	  $(MAKE) --directory=$(switchtec_src) KDIR=$(linux_src) \
+	  $(MAKE) --directory=$(cls_switchtec) KDIR=$(linux_src) \
 	  KVER=$(kernel_ver)$$i clean; \
 	  if [ "$$i" = "$(prod_suffix)" ]; then \
 	    $(SED) 's/CONFIG_LOCALVERSION\=\"\"/CONFIG_LOCALVERSION\=\"$(prod_suffix)\"/' \
 	    $(chroot_build)/misc/$(notdir $(linux_src)).config > \
 	    $(linux_src)/.config; \
-	    $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	    KDIR=$(linux_src) 2perf; \
-	    if [ "$(enable_qla)" = "yes" ]; then \
-	      $(MAKE) --directory=$(qla2xxx_src)/drivers/scsi/qla2xxx 2perf; \
+	    if [ "$(with_qla2xxx_scst)" = "yes" ]; then \
+	      $(SED) -i '/SCST_EXTRACHECKS/ s/^#*/#/' \
+	      $(qla2xxx_scst_dir)/Makefile; \
+	      $(SED) -i '/SCST_DEBUG/ s/^#*/#/' \
+	      $(qla2xxx_scst_dir)/Makefile; \
 	    fi; \
+	    $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
+	    KDIR=$(linux_src) QLA_INI_DIR=$(qla_ini_dir) QLA_DIR=$(qla_dir) \
+	    2release; \
 	  fi; \
 	  if [ "$$i" = "$(debug_suffix)" ]; then \
 	    $(SED) 's/CONFIG_LOCALVERSION\=\"\"/CONFIG_LOCALVERSION\=\"$(debug_suffix)\"/' \
@@ -1363,42 +1760,32 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    $(linux_src)/.config; \
 	    $(PATCH) -r - -N -d $(linux_src) -p1 < \
 	    $(chroot_build)/misc/$(notdir $(linux_src))-debug.patch; \
+	    if [ "$(with_qla2xxx_scst)" = "yes" ]; then \
+	      $(SED) -i '/SCST_EXTRACHECKS/ s/^#*//' \
+	      $(qla2xxx_scst_dir)/Makefile; \
+	      $(SED) -i '/SCST_DEBUG/ s/^#*//' \
+	      $(qla2xxx_scst_dir)/Makefile; \
+	    fi; \
 	    $(MAKE) --directory=$(scst_src) KVER=$(kernel_ver)$$i \
-	    KDIR=$(linux_src) 2debug; \
-	    if [ "$(enable_qla)" = "yes" ]; then \
-	      $(MAKE) --directory=$(qla2xxx_src)/drivers/scsi/qla2xxx 2debug; \
+	    KDIR=$(linux_src) QLA_INI_DIR=$(qla_ini_dir) QLA_DIR=$(qla_dir) \
+	    2debug; \
+	    if [ "$(with_celerity_16_32)" = "yes" ]; then \
+	      $(linux_src)/scripts/config --file $(linux_src)/.config \
+	      --disable CONFIG_DEBUG_OBJECTS_WORK \
+	      --disable CONFIG_PROVE_LOCKING \
+	      --disable CONFIG_DEBUG_RT_MUTEXES \
+	      --disable CONFIG_DEBUG_SPINLOCK \
+	      --disable CONFIG_DEBUG_MUTEXES \
+	      --disable CONFIG_DEBUG_WW_MUTEX_SLOWPATH \
+	      --disable CONFIG_DEBUG_LOCK_ALLOC \
+	      --disable CONFIG_LOCKDEP; \
 	    fi; \
-	    if [ "$(with_ocs_sdk)" = "yes" ]; then \
-	      $(SED) -i 's/CONFIG_DEBUG_LOCK_ALLOC=y/# CONFIG_DEBUG_LOCK_ALLOC is not set/' \
-	      $(linux_src)/.config; \
-	      $(SED) -i 's/CONFIG_PROVE_LOCKING=y/# CONFIG_PROVE_LOCKING is not set/' \
-	      $(linux_src)/.config; \
-	      $(SED) -i 's/CONFIG_LOCKDEP=y/# CONFIG_LOCKDEP is not set/' \
-	      $(linux_src)/.config; \
-	    fi; \
-	  fi; \
-	  if [ "$(enable_qla)" = "yes" ]; then \
-	    $(MKDIR) $(scst_src)/qla2x00t_git; \
-	    $(LN) $(linux_src)/drivers/scsi/qla2xxx \
-	    $(scst_src)/qla2x00t_git/qla2xxx; \
-	    $(LN) $(qla2xxx_src) \
-	    $(scst_src)/qla2x00t_git/qla2xxx-unified-target; \
-	    $(CP) -r $(scst_src)/qla2x00t_git/qla2xxx/Makefile \
-	    $(scst_src)/qla2x00t_git/qla2xxx-unified-target/; \
-	    $(CP) -r $(scst_src)/qla2x00t_git/qla2xxx/*.[ch] \
-	    $(scst_src)/qla2x00t_git/qla2xxx-unified-target/; \
-	    $(CP) -f $(qla2xxx_src)/drivers/scsi/qla2xxx/Makefile \
-	    $(scst_src)/qla2x00t_git/qla2xxx-unified-target/; \
-	    $(CP) -r $(qla2xxx_src)/drivers/scsi/qla2xxx/*.[ch] \
-	    $(scst_src)/qla2x00t_git/qla2xxx-unified-target/; \
 	  fi; \
 	  if [ "$(with_uwire)" = "yes" ]; then \
-	    $(SED) -i 's/CONFIG_CHELSIO_T4\=m/# CONFIG_CHELSIO_T4 is not set/' \
-	    $(linux_src)/.config; \
-	    $(SED) -i 's/CONFIG_CHELSIO_T4VF\=m/# CONFIG_CHELSIO_T4VF is not set/' \
-	    $(linux_src)/.config; \
-	    $(SED) -i 's/# CONFIG_FRAME_POINTER is not set/CONFIG_FRAME_POINTER=y/' \
-	    $(linux_src)/.config; \
+	    $(linux_src)/scripts/config --file $(linux_src)/.config \
+	    --disable CONFIG_CHELSIO_T4 \
+	    --disable CONFIG_CHELSIO_T4VF \
+	    --disable CONFIG_FRAME_POINTER; \
 	  fi; \
 	  $(ECHO) "### Compiling the Linux kernel..."; \
 	  $(MAKE) --directory=$(linux_src); \
@@ -1411,55 +1798,123 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	  $(XZ) -z -c $(linux_src)/System.map > \
 	  $(chroot_build)/System.map$$i.xz; \
 	  $(MAKE) --directory=$(linux_src) modules_install; \
-	  $(RM) /lib/modules/$(kernel_ver)$$i/kernel/drivers/scsi/qla2xxx; \
+	  if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	    $(ECHO) "### Compiling the Mellanox OFED modules..."; \
+	    $(SED) -i '2,$$s/\/bin\///g' $(mlnx_ofed_dir)/configure; \
+	    $(SED) -i '2,$$s/\/bin\///g' \
+	    $(mlnx_ofed_dir)/compat/config/parallel-build.m4; \
+	    $(SED) -i '2,$$s/\/bin\///g' \
+	    $(mlnx_ofed_dir)/compat/config/rdma.m4; \
+	    $(SED) -i 's/ \/bin\// /g; s/@\/bin\//@/g' \
+	    $(mlnx_ofed_dir)/makefile; \
+	    cd $(mlnx_ofed_dir)/compat && ./autogen.sh; \
+	    $(SED) -i 's/CONFIG_NVME_MULTIPATH="y"/CONFIG_NVME_MULTIPATH=/g' \
+	    $(mlnx_ofed_dir)/configure; \
+	    cd $(mlnx_ofed_dir) && ./configure --prefix=/usr --with-njobs=10 \
+	    --kernel-version=$(kernel_ver)$$i --kernel-sources=$(linux_src) \
+	    --with-core-mod --with-ipoib-mod --with-ipoib-cm --with-srp-mod \
+	    --with-user_mad-mod --with-user_access-mod --with-addr_trans-mod \
+	    --with-mlx5-mod --with-mlx4-mod --with-mlx4_inf-mod \
+	    --with-mlx5_inf-mod --with-mlxfw-mod --with-iser-mod \
+	    --with-nvmf_host-mod --with-nvmf_target-mod; \
+	    $(SED) '0,/^CFLAGS.*/s/^CFLAGS.*/CFLAGS += -DESOS_VERSION="\\"$(esos_ver)\\"" \\/' -i $(mlnx_ofed_dir)/makefile; \
+	    $(MAKE) --directory=$(mlnx_ofed_dir) V=1 MLNX_CFLAGS="" kernel; \
+	    $(MAKE) --directory=$(mlnx_ofed_dir) DEPMOD=true install_kernel; \
+	    while read -r line; do \
+	      module="$$(basename $${line})"; \
+	      $(FIND) /lib/modules/$(kernel_ver)$$i/kernel/drivers \
+	      -name $${module} -type f -delete; \
+	    done <<< "$$($(FIND) \
+	    /lib/modules/$(kernel_ver)$$i/extra/mlnx-ofa_kernel -name *.ko)"; \
+	    $(RM) /lib/modules/$(kernel_ver)$$i/extra/mlnx-ofa_kernel/drivers/nvme/host/qla2xxx.ko; \
+	    $(FIND) /lib/modules/$(kernel_ver)$$i/kernel/drivers \
+	    -empty -type d -delete; \
+	    $(MKDIR) $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i; \
+	    cd /lib/modules/$(kernel_ver)$$i/extra/mlnx-ofa_kernel && \
+	    $(INSTALL) -m 0644 compat/mlx_compat.ko \
+	    $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && \
+	    $(INSTALL) -m 0644 drivers/nvme/host/nvme.ko \
+	    $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && \
+	    $(INSTALL) -m 0644 drivers/nvme/host/nvme-core.ko \
+	    $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && cd -; \
+	  else \
+	    $(MKDIR) $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i; \
+	    cd /lib/modules/$(kernel_ver)$$i/kernel && \
+	    $(INSTALL) -m 0644 drivers/nvme/host/nvme.ko \
+	    $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && \
+	    $(INSTALL) -m 0644 drivers/nvme/host/nvme-core.ko \
+	    $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && cd -; \
+	  fi; \
 	  $(ECHO) "### Compiling the SCST core and target drivers..."; \
 	  $(SED) -i -e '/CONFIG_SCST_FORWARD_MODE_PASS_THROUGH/s/^\/\* //' \
 	  -e '/CONFIG_SCST_FORWARD_MODE_PASS_THROUGH/s/ \*\/$$//' \
 	  $(scst_src)/scst/include/scst.h; \
+	  if [ ! -d $(scst_src)/$(notdir $(scst_src)).patch ]; then \
+	    $(PATCH) -d $(scst_src) -b \
+	    -B $(scst_src)/$(notdir $(scst_src)).patch/ -p1 < \
+	    $(chroot_build)/misc/$(notdir $(scst_src)).patch; \
+	  fi; \
 	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
 	  KVER=$(kernel_ver)$$i scst; \
 	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
 	  KVER=$(kernel_ver)$$i \
 	  INSTALL_DIR_H=/usr/include/scst scst_install; \
-	  if [ "$(enable_qla)" != "yes" ]; then \
+	  if [ "$(with_qla2xxx_scst)" = "yes" ]; then \
+	    $(RM) /lib/modules/$(kernel_ver)$$i/kernel/drivers/scsi/qla2xxx; \
+	    if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	      $(CAT) /usr/include/scst/Module.symvers $(mlnx_ofed_dir)/Module.symvers > $(qla2xxx_scst_dir)/Module.symvers; \
+	    else \
+	      $(CP) /usr/include/scst/Module.symvers $(qla2xxx_scst_dir)/; \
+	    fi; \
+	    $(MAKE) --directory=$(qla2xxx_scst_dir) V=1 KVER=$(kernel_ver)$$i \
+	    KDIR=$(linux_src) SCST_INC_DIR=$(scst_src)/scst/include all; \
+	    $(MAKE) --directory=$(linux_src) M=$(qla2xxx_scst_dir) \
+	    modules_install; \
+	  else \
 	    BUILD_2X_MODULE=y CONFIG_SCSI_QLA_FC=y \
-	    CONFIG_SCSI_QLA2XXX_TARGET=y $(MAKE) --directory=$(scst_src) \
-	    KDIR=$(linux_src) KVER=$(kernel_ver)$$i qla_old; \
+	    CONFIG_SCSI_QLA2XXX_TARGET=y \
+	    $(MAKE) --directory=$(scst_src) QLA_INI_DIR=$(qla_ini_dir) \
+	    QLA_DIR=$(qla_dir) KDIR=$(linux_src) KVER=$(kernel_ver)$$i \
+	    qla; \
 	    BUILD_2X_MODULE=y CONFIG_SCSI_QLA_FC=y \
-	    CONFIG_SCSI_QLA2XXX_TARGET=y $(MAKE) --directory=$(scst_src) \
-	    KDIR=$(linux_src) KVER=$(kernel_ver)$$i qla_old_install; \
+	    CONFIG_SCSI_QLA2XXX_TARGET=y \
+	    $(MAKE) --directory=$(scst_src) QLA_INI_DIR=$(qla_ini_dir) \
+	    QLA_DIR=$(qla_dir) KDIR=$(linux_src) KVER=$(kernel_ver)$$i \
+	    qla_install; \
 	  fi; \
 	  $(MAKE) --directory=$(scst_src)/iscsi-scst \
 	  include/iscsi_scst_itf_ver.h; \
-	  $(MAKE) --directory=$(scst_src)/iscsi-scst KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i INFINIBAND_ENABLED=true mods; \
-	  $(MAKE) --directory $(linux_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i SCST_INC_DIR=$(scst_src)/scst/include \
-	  SUBDIRS=$(scst_src)/iscsi-scst/kernel modules_install; \
-	  $(MAKE) --directory $(linux_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i SCST_INC_DIR=$(scst_src)/scst/include \
-	  SUBDIRS=$(scst_src)/iscsi-scst/kernel/isert-scst modules_install; \
-	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i srpt; \
-	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i srpt_install; \
+	  if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	    $(MAKE) --directory=$(scst_src)/iscsi-scst KDIR=$(linux_src) \
+	    KVER=$(kernel_ver)$$i INFINIBAND_ENABLED=true OFED_FLAVOR=MOFED \
+	    OFED_DIR=$(mlnx_ofed_dir) V=1 mods; \
+	  else \
+	    $(MAKE) --directory=$(scst_src)/iscsi-scst KDIR=$(linux_src) \
+	    KVER=$(kernel_ver)$$i INFINIBAND_ENABLED=true mods; \
+	  fi; \
+	  $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+	  SCST_INC_DIR=$(scst_src)/scst/include \
+	  M=$(scst_src)/iscsi-scst/kernel modules_install; \
+	  $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+	  SCST_INC_DIR=$(scst_src)/scst/include \
+	  M=$(scst_src)/iscsi-scst/kernel/isert-scst modules_install; \
+	  if [ "$(with_mlnx_ofed)" = "yes" ]; then \
+	    $(MAKE) --directory=$(scst_src)/srpt KDIR=$(linux_src) \
+	    KVER=$(kernel_ver)$$i OFED_KERNEL_IB_PKG=mlnx-ofa_kernel \
+	    OFED_KERNEL_IB_DEVEL_PKG=mlnx-ofa_kernel-devel OFED_FLAVOR=MOFED \
+	    OFED_VERS="$(shell head -1 $(mlnx_ofed_dir)/MOFED_VERSION)" \
+	    OFED_KERNEL_DIR=$(mlnx_ofed_dir) V=1 all; \
+	  else \
+	    $(MAKE) --directory=$(scst_src)/srpt KDIR=$(linux_src) \
+	    KVER=$(kernel_ver)$$i all; \
+	  fi; \
+	  $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+	  SCST_INC_DIR=$(scst_src)/scst/include \
+	  M=$(scst_src)/srpt/src modules_install; \
 	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
 	  KVER=$(kernel_ver)$$i fcst; \
 	  $(MAKE) --directory=$(scst_src) KDIR=$(linux_src) \
 	  KVER=$(kernel_ver)$$i fcst_install; \
-	  if [ "$(enable_qla)" = "yes" ]; then \
-	    $(ECHO) "### Compiling the Cavium Fibre Channel target driver..."; \
-	    $(PATCH) -r - -N -d $(qla2xxx_src) -p4 < \
-	    $(qla2xxx_src)/drivers/scsi/qla2xxx/extras/export_target_list.dif; \
-	    $(PATCH) -r - -N -d $(qla2xxx_src) -p4 < \
-	    $(qla2xxx_src)/drivers/scsi/qla2xxx/extras/move_command_alloc_to_callback.patch; \
-	    $(MAKE) --directory=$(scst_src) obj-m="qla2xxx.o scst_qla2xxx.o" \
-	    KDIR=$(linux_src) KVER=$(kernel_ver)$$i SCST_INC_DIR=/usr/include \
-	    QLA_DIR=qla2x00t_git/qla2xxx-unified-target qla; \
-	    $(MAKE) --directory=$(scst_src) obj-m="qla2xxx.o scst_qla2xxx.o" \
-	    KDIR=$(linux_src) KVER=$(kernel_ver)$$i SCST_INC_DIR=/usr/include \
-	    QLA_DIR=qla2x00t_git/qla2xxx-unified-target qla_install; \
-	  fi; \
 	  if [ "$(enable_mhvtl)" = "yes" ]; then \
 	    $(ECHO) "### Compiling the mhVTL module..."; \
 	    $(MAKE) --directory=$(mhvtl_src)/kernel KDIR=$(linux_src) \
@@ -1492,7 +1947,8 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	  if [ "$(with_celerity_16_32)" = "yes" ]; then \
 	    $(ECHO) "### Compiling the ATTO Celerity 16/32 HBA module..."; \
 	    $(MAKE) --directory=$(celerity_16_32_dir)/src KDIR=$(linux_src) \
-	    DRIVER_NAME=celerity16fc PWD=$(celerity_16_32_dir)/src install; \
+	    DRIVER_NAME=celerity16fc PWD=$(celerity_16_32_dir)/src \
+	    DEPMOD=true install; \
 	  fi; \
 	  if [ "$(with_atto_scst)" = "yes" ]; then \
 	    $(ECHO) "### Compiling the ATTO SCST Target module..."; \
@@ -1501,11 +1957,9 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    $(atto_scst_dir)/Module.symvers; \
 	    $(MAKE) --directory=$(atto_scst_dir) KDIR=$(linux_src) \
 	    FULL_KERNEL_VERSION=$(kernel_ver)$$i PWD=$(atto_scst_dir) \
-	    MODULE_ROOT=/lib/modules/$(kernel_ver)$$i/extra \
-	    atto_scst_16fc; \
-	    $(INSTALL) -D -m 0644 \
-	    $(atto_scst_dir)/atto_scst_16fc.ko \
-	    /lib/modules/$(kernel_ver)$$i/extra/atto_scst_16fc.ko; \
+	    MODULE_ROOT=/lib/modules/$(kernel_ver)$$i/extra module; \
+	    $(MAKE) --directory=$(linux_src) M="$(atto_scst_dir)" \
+	    KVER=$(kernel_ver)$$i modules_install; \
 	  fi; \
 	  if [ "$(with_ocs_sdk)" = "yes" ]; then \
 	    $(ECHO) "### Compiling the Emulex OCS SCST module..."; \
@@ -1558,33 +2012,57 @@ esos_kernels.chroot: kernel_headers.chroot bc.chroot elfutils.chroot \
 	    KDIR="$(linux_src)" SCST_INC="/usr/include/scst" \
 	    target=1; \
 	    $(MAKE) --directory=$(linux_src) M="$(uwire_dir)/src/chfcoe/src" \
-	    KVER=$(kernel_ver)$$i \
-	    modules_install; \
+	    KVER=$(kernel_ver)$$i modules_install; \
+	  fi; \
+	  if [ "$(with_bnxt_en)" = "yes" ]; then \
+	    $(ECHO) "### Compiling the Broadcom NetXtreme Ethernet module..."; \
+	    $(MAKE) --directory=$(bnxt_en_dir) KDIR=$(linux_src) \
+	    KVER=$(kernel_ver)$$i PREFIX=/ build; \
+	    $(MAKE) --directory=$(bnxt_en_dir) \
+	    KVER=$(kernel_ver)$$i PREFIX=/ install; \
+	    $(MV) -f /lib/modules/$(kernel_ver)$$i/updates/bnxt_en.ko \
+	    /lib/modules/$(kernel_ver)$$i/kernel/drivers/net/ethernet/broadcom/bnxt/; \
+	  fi; \
+	  $(MKDIR) $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i; \
+	  cd /lib/modules/$(kernel_ver)$$i/kernel && \
+	  $(INSTALL) -m 0644 drivers/net/ethernet/broadcom/bnxt/bnxt_en.ko \
+	  $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && cd -; \
+	  if [ "$(with_r8152)" = "yes" ]; then \
+	    $(ECHO) "### Compiling the Realtek RTL8152/RTL8153 module..."; \
+	    $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+            M=$(r8152_dir) V=1 EXTRA_CFLAGS="-DRTL8152_DEBUG"; \
+	    $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+            M=$(r8152_dir) V=1 modules_install; \
+	    $(MV) -f /lib/modules/$(kernel_ver)$$i/extra/r8152.ko \
+	    /lib/modules/$(kernel_ver)$$i/kernel/drivers/net/usb/; \
+	  fi; \
+	  $(MKDIR) $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i; \
+	  cd /lib/modules/$(kernel_ver)$$i/kernel && \
+	  $(INSTALL) -m 0644 drivers/net/usb/r8152.ko \
+	  $(chroot_build)/initramfs/lib/modules/$(kernel_ver)$$i/ && cd -; \
+	  if [ "$(with_rapiddisk)" = "yes" ]; then \
+	    $(ECHO) "### Compiling the RapidDisk modules..."; \
+	    $(MAKE) --directory=$(linux_src) KVER=$(kernel_ver)$$i \
+	    M=$(rapiddisk_dir)/rapiddisk-master/module; \
+	    $(MAKE) --directory=$(linux_src) \
+	    M=$(rapiddisk_dir)/rapiddisk-master/module modules_install; \
 	  fi; \
 	  if [ "$(enable_zfs)" = "yes" ] && [ "$$i" = "$(prod_suffix)" ]; then \
-	    $(ECHO) "### Compiling the SPL and ZFS modules..."; \
-	    if [ ! -f "$(spl_src)/configure" ]; then \
-	      cd $(spl_src) && ./autogen.sh; \
-	    fi; \
-	    cd $(spl_src) && ./configure --prefix=/usr --sysconfdir=/etc \
-	    --with-linux=$(linux_src) --with-linux-obj=$(linux_src); \
-	    $(MAKE) --directory=$(spl_src)/module modules; \
-	    $(MAKE) --directory=$(spl_src)/module modules_install; \
+	    $(ECHO) "### Compiling the ZFS on Linux modules..."; \
 	    if [ ! -f "$(zfs_src)/configure" ]; then \
 	      cd $(zfs_src) && ./autogen.sh; \
 	    fi; \
 	    cd $(zfs_src) && ./configure --prefix=/usr --sysconfdir=/etc \
 	    --with-linux=$(linux_src) --with-linux-obj=$(linux_src) \
-	    --with-spl=$(spl_src) --with-spl-obj=$(spl_src) \
-	    --with-udevdir="/usr/lib/udev"; \
+	    --with-udevdir="/usr/lib/udev" --disable-silent-rules; \
 	    $(MAKE) --directory=$(zfs_src)/module modules; \
 	    $(MAKE) --directory=$(zfs_src)/module modules_install; \
 	  fi; \
-	  $(ECHO) "### Compiling Microsemi's Switchtec NTB driver..."; \
-	  $(MAKE) --directory=$(switchtec_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i modules; \
-	  $(MAKE) --directory=$(switchtec_src) KDIR=$(linux_src) \
-	  KVER=$(kernel_ver)$$i install; \
+	  $(ECHO) "### Compiling the Celestica Switchtec NTB driver..."; \
+	  $(CHMOD) +x $(cls_switchtec)/VERSION-GEN; \
+	  $(MAKE) --directory=$(cls_switchtec) MODULE_NAME=cls_switchtec \
+	  KDIR=$(linux_src) KVER=$(kernel_ver)$$i; \
+	  $(MAKE) --directory=$(linux_src) M=$(cls_switchtec) modules_install; \
 	done
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
@@ -1631,15 +2109,13 @@ scst.chroot: glibc.chroot esos_kernels.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-gdb.chroot: glibc.chroot ncurses.chroot zlib.chroot readline.chroot
+gdb.chroot: glibc.chroot ncurses.chroot zlib.chroot readline.chroot \
+	Python.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(SED) -i "/for ac_lib/s/ncurses /ncursesw /" \
-	$(tgt_src_dir)/gdb/configure
-	$(SED) -i "/for ac_lib/s/ncurses;/ncursesw;/" \
-	$(tgt_src_dir)/gdb/configure
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --without-python \
-	--with-curses --with-system-zlib --with-system-readline
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-curses \
+	--with-python=/usr/bin/python3 --with-system-zlib \
+	--with-system-readline
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -1657,30 +2133,15 @@ valgrind.chroot: glibc.chroot
 strace.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-mpers
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
-	$(TOUCH) $(@)
-	$(QUIET) $(ECHO) "### Done $(@)"
-
-spl.chroot: esos_kernels.chroot
-	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call chroot_only)
-	$(MAKE) --directory=$(tgt_src_dir)/lib
-	$(MAKE) --directory=$(tgt_src_dir)/cmd
-	$(MAKE) --directory=$(tgt_src_dir)/man
-	$(MAKE) --directory=$(tgt_src_dir)/cmd install
-	$(MAKE) --directory=$(tgt_src_dir)/man install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 zfs.chroot: esos_kernels.chroot eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --directory=$(tgt_src_dir)/lib
-	$(MAKE) --directory=$(tgt_src_dir)/cmd
-	$(MAKE) --directory=$(tgt_src_dir)/man
-	$(MAKE) --directory=$(tgt_src_dir)/udev
 	$(MAKE) --directory=$(tgt_src_dir)/lib install
 	$(MAKE) --directory=$(tgt_src_dir)/cmd install
 	$(MAKE) --directory=$(tgt_src_dir)/man install
@@ -1688,33 +2149,20 @@ zfs.chroot: esos_kernels.chroot eudev.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-web_ui.chroot: Python.chroot nginx.chroot sudo.chroot
+qla2xxx_scst.chroot: eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(CP) -f $(web_ui_dir)/nginx.conf /etc/nginx/nginx.conf
-	$(INSTALL) -D -m 0755 $(web_ui_dir)/manage.py \
-	/opt/lib/web_ui/manage.py
-	$(INSTALL) -D -m 0755 $(web_ui_dir)/uwsgi_params \
-	/opt/lib/web_ui/uwsgi_params
-	$(CP) -R $(web_ui_dir)/esos /opt/lib/web_ui/
-	$(CP) -R $(web_ui_dir)/web_ui /opt/lib/web_ui/
-	$(CP) -R $(web_ui_dir)/static /opt/lib/web_ui/
-	$(CP) -R $(web_ui_dir)/templates /opt/lib/web_ui/
-	$(INSTALL) -D -m 0644 $(web_ui_dir)/uwsgi.ini /etc/web_ui/uwsgi.ini
-	$(ECHO) "webui ALL=(root) NOPASSWD: /etc/rc.d/rc.rpcagent,\
-	/usr/local/sbin/install_lic.sh,/usr/local/sbin/read_cert.sh" \
-	> /etc/sudoers.d/webui
-	$(TOUCH) $(@)
-	$(QUIET) $(ECHO) "### Done $(@)"
-
-rpc_agent.chroot: glibc.chroot stunnel.chroot xmlrpc-c.chroot \
-	libxml2.chroot iniparser.chroot
-	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call chroot_only)
-	$(MKDIR) $(rpc_agent_dir)/obj
-	$(MAKE) --directory=$(rpc_agent_dir) --file=Makefile.esos
-	$(CP) -f $(rpc_agent_dir)/stunnel.conf /etc/stunnel/stunnel.conf
-	$(INSTALL) -D -m 0755 $(rpc_agent_dir)/rpc_agent /opt/sbin/rpc_agent
+	$(QUIET) if [ ! -d $(qla2xxx_scst_dir)/qla2xxx_scst.patch ]; then \
+	  $(PATCH) -d $(qla2xxx_scst_dir) -b \
+	  -B $(qla2xxx_scst_dir)/qla2xxx_scst.patch/ -p1 < \
+	  $(chroot_build)/misc/qla2xxx_scst.patch; \
+	fi
+	$(INSTALL) -m 0755 $(qla2xxx_scst_dir)/extras/spreadirq.py \
+	/usr/sbin/
+	$(INSTALL) -m 0755 $(qla2xxx_scst_dir)/extras/qla2xxx_npiv.py \
+	/usr/sbin/
+	$(INSTALL) -m 0755 $(qla2xxx_scst_dir)/extras/qla2xxx_udev.sh \
+	/usr/lib/udev/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -1740,7 +2188,7 @@ ocs_sdk.chroot: glibc.chroot libxml2.chroot
 	$(call chroot_only)
 	$(MAKE) --directory=$(ocs_sdk_dir)/tools/user/elxsdkutil \
 	LIBXML2_INC="-I/usr/include/libxml2" \
-	LIBXML2_LIB="-lxml2 -lm -ldl"
+	LIBXML2_LIB="-lxml2 -lm -ldl" WARNINGS="-Wall"
 	$(INSTALL) -m 0755 $(ocs_sdk_dir)/tools/user/elxsdkutil/elxsdkutil \
 	/usr/sbin/
 	$(INSTALL) -m 0755 $(ocs_sdk_dir)/tools/bin/ocs_config.py \
@@ -1765,6 +2213,31 @@ uwire.chroot: glibc.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
+mlnx_ofed.chroot: esos_kernels.chroot Python.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(SED) -i 's,)/lib/udev/rules.d$$,)/usr/lib/udev/rules.d,g' \
+	$(mlnx_ofed_dir)/makefile
+	$(SED) -i 's,)/lib/udev$$,)/usr/lib/udev,g' \
+	$(mlnx_ofed_dir)/makefile
+	$(SED) -e '/Installing scripts and/,+7 s/^/#/' \
+	-i $(mlnx_ofed_dir)/makefile
+	$(MAKE) --directory=$(mlnx_ofed_dir) V=1 build_py_scripts
+	$(MAKE) --directory=$(mlnx_ofed_dir) V=1 install_scripts
+	$(SED) -e '/mlnx_interface_mgr.sh/ s/^#*/#/' \
+	-i /usr/lib/udev/rules.d/90-ib.rules
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+rapiddisk.chroot: glibc.chroot jansson.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(rapiddisk_dir)/rapiddisk-master/src
+	$(INSTALL) -m 0755 $(rapiddisk_dir)/rapiddisk-master/src/rapiddisk \
+	/usr/sbin/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
 Linux-PAM.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
@@ -1785,10 +2258,8 @@ Linux-PAM.chroot: glibc.chroot
 busybox.chroot: glibc.chroot Linux-PAM.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(SED) -i 's/\/\/if (--loop_on_fail == 0)/if (--loop_on_fail == 0)/' \
-	$(tgt_src_dir)/networking/ntpd.c
-	$(SED) -i 's/\/\/\txfunc_die();/\txfunc_die();/' \
-	$(tgt_src_dir)/networking/ntpd.c
+	$(SED) -i 's/bb_basename(p->exe)/p->exe/' \
+	$(tgt_src_dir)/libbb/find_pid_by_name.c
 	$(MAKE) --directory=$(tgt_src_dir) clean
 	$(MAKE) --directory=$(tgt_src_dir) distclean
 	$(SED) -e 's/.*CONFIG_STATIC.*/CONFIG_STATIC=y/' \
@@ -1806,13 +2277,17 @@ busybox.chroot: glibc.chroot Linux-PAM.chroot
 	$(INSTALL) -d /usr/share/udhcpc
 	$(INSTALL) $(tgt_src_dir)/examples/udhcp/simple.script \
 	/usr/share/udhcpc/default.script
+	$(INSTALL) -d $(chroot_build)/initramfs/usr/share/udhcpc
+	$(INSTALL) $(tgt_src_dir)/examples/udhcp/simple.script \
+	$(chroot_build)/initramfs/usr/share/udhcpc/default.script
 	$(ECHO) -e "#! /bin/sh\n\n/bin/busybox awk \"\044\0100\"\n" > \
 	/usr/bin/gawk
 	$(CHMOD) +x /usr/bin/gawk
+	$(LN) -sf /bin/busybox /bin/cpio
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-makedumpfile.chroot: glibc.chroot elfutils.chroot bzip2.chroot
+makedumpfile.chroot: glibc.chroot elfutils.chroot zlib.chroot bzip2.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(MAKE) --directory=$(tgt_src_dir)
@@ -1821,10 +2296,11 @@ makedumpfile.chroot: glibc.chroot elfutils.chroot bzip2.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-elfutils.chroot: glibc.chroot zlib.chroot
+elfutils.chroot: glibc.chroot zlib.chroot bzip2.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-zlib \
+	--with-bzlib --without-lzma
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -1833,17 +2309,17 @@ elfutils.chroot: glibc.chroot zlib.chroot
 sysvinit.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
-	$(MAKE) --directory=$(tgt_src_dir)/src SULOGINLIBS=-lcrypt \
+	$(call apply_pkg_patch)
+	$(MAKE) --directory=$(tgt_src_dir) SULOGINLIBS=-lcrypt \
 	CFLAGS="-O2 -fomit-frame-pointer"
-	$(MAKE) --directory=$(tgt_src_dir)/src ROOT=/ install
+	$(MAKE) --directory=$(tgt_src_dir) ROOT=/ install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 grub.chroot: glibc.chroot lvm2.chroot freetype.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-grub-mkfont \
 	--enable-device-mapper --disable-efiemu --with-platform=pc \
 	--target=i386 --disable-werror
@@ -1889,69 +2365,120 @@ grub.chroot: glibc.chroot lvm2.chroot freetype.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-perl.chroot: glibc.chroot db.chroot
+perl.chroot: glibc.chroot db.chroot sqlite-autoconf.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure.gnu --prefix=/usr --verbose
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install.perl INSTALLFLAGS="-f -o"
+	$(ECHO) yes | cpan install JROGERS/Net-Telnet-3.04.tar.gz
+	$(ECHO) yes | cpan install TIMB/DBI-1.642.tar.gz
+	$(ECHO) yes | cpan install ISHIGAKI/DBD-SQLite-1.64.tar.gz
+	$(RM) /root/.cpan
+	$(RM) /.cpan
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 Python.chroot: glibc.chroot gcc.chroot bzip2.chroot readline.chroot \
 	openssl.chroot zlib.chroot sqlite-autoconf.chroot ncurses.chroot \
-	db.chroot libxml2.chroot libxslt.chroot curl.chroot postgresql.chroot \
-	mysql.chroot util-linux.chroot
+	db.chroot libxml2.chroot libxslt.chroot curl.chroot util-linux.chroot \
+	libffi.chroot xz.chroot \
+	$(if $(findstring yes,$(enable_python_sql)),\
+	postgresql.chroot mysql.chroot ,)\
+	$(if $(findstring yes,$(enable_memcached)),\
+	memcached.chroot,)
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-shared \
 	--with-ensurepip=upgrade
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
-	pip3 install --upgrade pip
-	pip3 install configshell-fb==1.1.23
-	pip3 install docutils==0.12
-	pip3 install pbr==1.10.0
+	$(INSTALL) -D -m 0644 $(tgt_src_dir)/python-gdb.py \
+	/usr/share/gdb/auto-load/usr/bin/python3.9-gdb.py
+	pip3 install pip==23.0.1
+	pip3 install configshell-fb==1.1.29
+	pip3 install docutils==0.17.1
+	pip3 install pbr==5.6.0
 	pip3 install lockfile==0.12.2
-	pip3 install python-daemon==2.1.1
-	pip3 install lxml==3.6.4
-	pip3 install suds-py3==1.3.3.0
-	pip3 install ptyprocess==0.5.1
-	pip3 install pexpect==4.2.1
-	PYCURL_SSL_LIBRARY=openssl pip3 install pycurl==7.43.0
-	pip3 install psycopg2==2.6.2
-	pip3 install pyparsing==2.1.10
-	pip3 install requests==2.11.1
-	pip3 install six==1.10.0
-	pip3 install mysqlclient==1.3.12
-	pip3 install SQLAlchemy==1.1.1
-	pip3 install parallax==1.0.4
+	pip3 install python-daemon==2.3.0
+	pip3 install lxml==4.6.3
+	pip3 install suds-py3==1.4.4.1
+	pip3 install ptyprocess==0.7.0
+	pip3 install pexpect==4.8.0
+	PYCURL_SSL_LIBRARY=openssl pip3 install pycurl==7.43.0.6
+	pip3 install pyparsing==2.4.7
+	pip3 install requests==2.25.1
+	pip3 install six==1.16.0
+	pip3 install parallax==1.0.6
 	pip3 install py-dateutil==2.2
-	pip3 install PyYAML==3.13
-	pip3 install pytz==2018.5
-	pip3 install Django==2.0.5
+	pip3 install PyYAML==5.4.1
+	pip3 install pytz==2021.1
 	pip3 install python-pam==1.8.4
-	pip3 install django-pam==1.4.1
-	pip3 install django-widget-tweaks==1.4.2
-	pip3 install django-session-timeout==0.0.3
-	pip3 install uWSGI==2.0.17.1
-	pip3 install pySMART.smartx==0.3.9
+	LDFLAGS=-fno-lto pip3 install uWSGI==2.0.19.1
+	pip3 install pySMART.smartx==0.3.10
 	pip3 install mdstat==1.0.4
-	pip3 install py-dmidecode==0.0.2
-	pip3 install netifaces==0.10.9
-	pip3 install ordered-set==3.1
-	pip3 install deepdiff==4.0.6
-	pip3 install pyasn1==0.4.5
-	pip3 install pycparser==2.19
-	pip3 install cffi==1.11.5
-	pip3 install bcrypt==3.1.6
-	pip3 install PyNaCl==1.3.0
-	pip3 install asn1crypto==0.24.0
-	pip3 install cryptography==2.4.2
-	pip3 install paramiko==2.4.2
-	pip3 install tzlocal==1.5.1
-	pip3 install tzdata==1.2016.8
+	pip3 install py-dmidecode==0.1.0
+	pip3 install netifaces==0.11.0
+	pip3 install ordered-set==4.0.2
+	pip3 install deepdiff==5.5.0
+	pip3 install pyasn1==0.4.8
+	pip3 install pycparser==2.20
+	pip3 install cffi==1.14.5
+	pip3 install bcrypt==3.2.0
+	pip3 install PyNaCl==1.4.0
+	pip3 install asn1crypto==1.4.0
+	pip3 install cryptography==3.4.7
+	pip3 install paramiko==2.7.2
+	pip3 install tzlocal==2.1
+	pip3 install tzdata==2021.1
+	pip3 install pyudev==0.22.0
+	pip3 install rst2html==2020.7.4
+	pip3 install genshi==0.7.5
+	pip3 install pygments==2.9.0
+	pip3 install rst2html5==2.0
+	pip3 install wrapt==1.12.1
+	pip3 install more-itertools==8.8.0
+	pip3 install jaraco.functools==3.3.0
+	pip3 install tempora==4.1.1
+	pip3 install jaraco.text==3.5.0
+	pip3 install jaraco.classes==3.2.1
+	pip3 install zc.lockfile==2.0
+	pip3 install portend==2.7.1
+	pip3 install jaraco.collections==3.3.0
+	pip3 install cheroot==8.5.2
+	pip3 install cherrypy==18.6.0
+	pip3 install colorama==0.4.4
+	pip3 install pyperclip==1.8.2
+	pip3 install wcwidth==0.2.5
+	pip3 install attrs==21.2.0
+	pip3 install cmd2==2.2.0
+	pip3 install xmltodict==0.12.0
+	pip3 install aiohttp==3.8.3
+	pip3 install frozenlist==1.3.3
+	pip3 install charset-normalizer==2.1.1
+	pip3 install yarl==1.9.1
+	pip3 install async-timeout==4.0.2
+	pip3 install multidict==6.0.4
+	pip3 install aiosignal==1.3.1
+	pip3 install idna==2.10
+	pip3 install typing-extensions==4.5.0
+	pip3 install async-lru==2.0.2
+	pip3 install caio==0.9.11
+	pip3 install aiofile==3.8.1
+	pip3 install websockets==11.0.3
+	pip3 install py-spy==0.3.14
+	$(QUIET) if [ "$(enable_python_sql)" = "yes" ]; then \
+	  pip3 install psycopg2==2.8.1; \
+	  pip3 install mysqlclient==2.0.3; \
+	  pip3 install SQLAlchemy==1.4.19; \
+	fi
+	$(QUIET) if [ "$(enable_memcached)" = "yes" ]; then \
+	  pip3 install pymemcache==3.5.2; \
+	fi
 	$(RM) /.cache
+	cd /usr/lib/python*/site-packages/ && \
+	$(PATCH) -p1 --forward -r - < \
+	$(chroot_build)/misc/post_python_pip.patch || true
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -1965,7 +2492,7 @@ qlogic_fw.chroot:
 
 scstadmin.chroot: perl_mod = $(wildcard $(scst_src)/scstadmin/scstadmin/scst-*)
 scstadmin.chroot: perl_lib = $(wildcard /usr/lib/perl5/5.*)
-scstadmin.chroot: perl.chroot
+scstadmin.chroot: perl.chroot scst.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(perl_mod) && PERL5LIB="$(perl_lib)" /usr/bin/perl \
@@ -1974,6 +2501,7 @@ scstadmin.chroot: perl.chroot
 	$(MAKE) --directory=$(perl_mod) PERL5LIB="$(perl_lib)"
 	$(MAKE) --directory=$(perl_mod) PERL5LIB="$(perl_lib)" install
 	$(INSTALL) -m 755 $(scst_src)/scstadmin/scstadmin/scstadmin /usr/sbin/
+	$(SED) -i 's/$$rc = issueLip() if ($$changes \&\& $$lip);/$$rc = issueLip($$driver, $$issueLip, TRUE) if ($$changes \&\& $$lip);/' /usr/sbin/scstadmin
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -1985,6 +2513,8 @@ openssh.chroot: glibc.chroot zlib.chroot openssl.chroot
 	--without-openssl-header-check
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) DESTDIR=/ install
+	$(INSTALL) -m 0755 $(tgt_src_dir)/contrib/ssh-copy-id \
+	/usr/bin/ssh-copy-id
 	$(SED) -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' \
 	/etc/ssh/sshd_config
 	$(TOUCH) $(@)
@@ -2002,10 +2532,11 @@ vixie-cron.chroot: glibc.chroot
 openssl.chroot: glibc.chroot gcc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && ./config shared zlib-dynamic \
 	--prefix=/usr --openssldir=/etc/ssl
 	$(MAKE) --jobs=1 --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install_sw
+	$(MAKE) --directory=$(tgt_src_dir) install_sw install_ssldirs
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2021,8 +2552,7 @@ zlib.chroot: glibc.chroot
 ncurses.chroot: glibc.chroot gcc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-shared \
 	--without-gpm --mandir=/usr/share/man --enable-widec
 	$(MAKE) --directory=$(tgt_src_dir)
@@ -2030,6 +2560,8 @@ ncurses.chroot: glibc.chroot gcc.chroot
 	$(MKDIR) /usr/include/ncursesw
 	$(LN) ../ncurses.h /usr/include/ncursesw/ncurses.h
 	$(LN) ../term.h /usr/include/ncursesw/term.h
+	$(LN) -v libncursesw.so /usr/lib/libncurses.so
+	$(LN) -v libformw.so /usr/lib/libform.so
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2046,7 +2578,11 @@ e2fsprogs.chroot: glibc.chroot util-linux.chroot
 	$(MAKE) --directory=$(chroot_build)/e2fsprogs-build \
 	LIBUUID="-luuid" LIBBLKID="-lblkid"
 	$(MAKE) --directory=$(chroot_build)/e2fsprogs-build install
-	$(MAKE) --directory=$(chroot_build)/e2fsprogs-build  install-libs
+	$(MAKE) --directory=$(chroot_build)/e2fsprogs-build/e2fsck \
+	e2fsck.static
+	$(INSTALL) -D -m 755 \
+	$(chroot_build)/e2fsprogs-build/e2fsck/e2fsck.static \
+	$(chroot_build)/initramfs/usr/sbin/e2fsck
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2120,7 +2656,8 @@ libmlx4.chroot: glibc.chroot libibverbs.chroot
 libmlx5.chroot: glibc.chroot libibverbs.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc
+	cd $(tgt_src_dir) && CFLAGS='-Wstringop-truncation' \
+	./configure --prefix=/usr --sysconfdir=/etc
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2168,7 +2705,7 @@ srptools.chroot: glibc.chroot libibumad.chroot libibverbs.chroot
 lsscsi.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-nvme-supp
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2188,8 +2725,6 @@ sg3_utils.chroot: glibc.chroot
 groff.chroot: glibc.chroot gcc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir) CCC="g++ -std=c++98 \
 	-I$(wildcard /tools/include/c++/*) \
@@ -2213,20 +2748,19 @@ iniparser.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(MAKE) --directory=$(tgt_src_dir) CFLAGS="-O2 -fPIC -Wall"
-	$(INSTALL) -m 0644 $(tgt_src_dir)/libiniparser.a /usr/lib/
-	$(INSTALL) -m 0755 $(tgt_src_dir)/libiniparser.so.0 /usr/lib/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/libiniparser.so.* /usr/lib/
 	$(INSTALL) -m 0644 $(tgt_src_dir)/src/iniparser.h /usr/include/
 	$(INSTALL) -m 0644 $(tgt_src_dir)/src/dictionary.h /usr/include/
+	$(LN) -v libiniparser.so.1 /usr/lib/libiniparser.so
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 cdk.chroot: glibc.chroot ncurses.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-ncursesw \
-	--with-libtool --mandir=/usr/share/man
+	--with-libtool --mandir=/usr/share/man --with-shared
 	$(MAKE) --directory=$(tgt_src_dir) LIBS="-lncursesw"
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2242,7 +2776,8 @@ lvm2.chroot: glibc.chroot corosync.chroot dlm.chroot \
 	--enable-cmirrord --disable-readline --with-thin=internal \
 	--with-thin-check=/usr/sbin/thin_check --with-cache=internal \
 	--enable-udev_sync --enable-udev_rules --enable-lvmetad \
-	--disable-udev-systemd-background-jobs --enable-lockd-dlm
+	--disable-udev-systemd-background-jobs --enable-lockd-dlm \
+	--enable-pkgconfig
 	$(SED) -i "/VGOUT=/s/OCF_ERR_GENERIC/OCF_NOT_RUNNING/" \
 	$(tgt_src_dir)/scripts/VolumeGroup.ocf
 	$(MAKE) --directory=$(tgt_src_dir)
@@ -2253,6 +2788,8 @@ lvm2.chroot: glibc.chroot corosync.chroot dlm.chroot \
 	$(MAKE) --directory=$(tgt_src_dir)/scripts install
 	$(MAKE) --directory=$(tgt_src_dir)/daemons install
 	$(MAKE) --directory=$(tgt_src_dir)/udev install
+	$(SED) -i '/systemd-run/c\ENV{LVM_VG_NAME_COMPLETE}=="?*", RUN+="\/usr\/sbin\/lvm vgchange -aay --nohints $$env{LVM_VG_NAME_COMPLETE}"' \
+	/usr/lib/udev/rules.d/69-dm-lvm.rules
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2269,8 +2806,6 @@ xfsprogs.chroot: glibc.chroot util-linux.chroot
 drbd-utils.chroot: glibc.chroot eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
 	$(SED) -e '/install -d $$(DESTDIR)$$(INITDIR)/ s/^#*/#/' -i \
 	$(tgt_src_dir)/scripts/Makefile.in
 	$(SED) -e '/install -m 755 drbd $$(DESTDIR)$$(INITDIR)\// s/^#*/#/' -i \
@@ -2288,28 +2823,33 @@ drbd-utils.chroot: glibc.chroot eudev.chroot
 mdadm.chroot: glibc.chroot corosync.chroot dlm.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
-	$(MAKE) --directory=$(tgt_src_dir) clean
-	$(MAKE) --directory=$(tgt_src_dir) mdadm.static
+	$(call apply_pkg_patch)
+	$(MAKE) --directory=$(tgt_src_dir) mdadm.static \
+	CXFLAGS="-Wno-address-of-packed-member -Wno-absolute-value"
 	$(INSTALL) -D -m 755 $(tgt_src_dir)/mdadm.static \
 	$(chroot_build)/initramfs/sbin/mdadm
 	$(MAKE) --directory=$(tgt_src_dir) clean
 	$(MAKE) --directory=$(tgt_src_dir) \
 	MAP_DIR="/var/run/mdadm" RUN_DIR="/var/run/mdadm" \
-	CWFLAGS="-Wall -Wstrict-prototypes -Wextra -Wno-unused-parameter"
+	CXFLAGS="-Wno-address-of-packed-member -Wno-absolute-value"
 	$(INSTALL) -D -m 755 $(tgt_src_dir)/mdadm /sbin/mdadm
 	$(INSTALL) -D -m 755 $(tgt_src_dir)/mdmon /sbin/mdmon
+	$(INSTALL) -D -m 755 $(tgt_src_dir)/misc/mdcheck /sbin/mdcheck
 	$(MAKE) --directory=$(tgt_src_dir) install-man
 	$(MAKE) --directory=$(tgt_src_dir) UDEVDIR=/usr/lib/udev install-udev
+	$(MAKE) --directory=$(tgt_src_dir) clean
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-parted.chroot: glibc.chroot util-linux.chroot lvm2.chroot
+parted.chroot: glibc.chroot util-linux.chroot lvm2.chroot readline.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && CFLAGS="-D_BLKID_TYPES_H" ./configure \
-	--prefix=/usr --without-readline
+	$(QUIET) if ! $(GREP) -q '#include <sys/sysmacros.h>' \
+	  $(tgt_src_dir)/libparted/arch/linux.c; then \
+	  $(SED) -i '/utsname.h/a#include <sys/sysmacros.h>' \
+	  $(tgt_src_dir)/libparted/arch/linux.c; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-static
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2333,6 +2873,9 @@ opensm.chroot: glibc.chroot gcc.chroot libibumad.chroot libibverbs.chroot
 libqb.chroot: glibc.chroot glib.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -2403,27 +2946,26 @@ corosync.chroot: glibc.chroot libqb.chroot nss.chroot librdmacm.chroot \
 nss.chroot: glibc.chroot gcc.chroot sqlite-autoconf.chroot zlib.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --jobs=1 --directory=$(tgt_src_dir)/nss \
-	BUILD_OPT=1 USE_64=1 NSS_USE_SYSTEM_SQLITE=1 USE_SYSTEM_ZLIB=1 \
-	ZLIB_LIBS="-lz" OS_LIBS="-lpthread -ldl -lc -lrt -lz" \
-	CC="gcc -I$(tgt_src_dir)/nss/lib/zlib \
-	-I$(tgt_src_dir)/nss/lib/nss" \
-	DSO_CFLAGS="-w -fPIC -std=gnu99" nss_build_all
+	$(call apply_pkg_patch)
+	$(SED) -i 's#$$(LIBRARY) ##' $(tgt_src_dir)/nspr/config/rules.mk
+	cd $(tgt_src_dir)/nspr && ./configure --prefix=/usr --with-mozilla \
+	--with-pthreads --enable-64bit
+	$(MAKE) --directory=$(tgt_src_dir)/nspr
+	$(MAKE) --directory=$(tgt_src_dir)/nspr install
+	$(MAKE) --directory=$(tgt_src_dir)/nss -j1 BUILD_OPT=1 \
+	NSPR_INCLUDE_DIR=/usr/include/nspr USE_SYSTEM_ZLIB=1 ZLIB_LIBS=-lz \
+	NSS_ENABLE_WERROR=0 USE_64=1 NSS_USE_SYSTEM_SQLITE=1
 	$(INSTALL) -v -m755 $(tgt_src_dir)/dist/Linux*/lib/*.so /usr/lib
 	$(INSTALL) -v -m644 $(tgt_src_dir)/dist/Linux*/lib/{*.chk,libcrmf.a} \
 	/usr/lib
 	$(INSTALL) -v -m755 -d /usr/include/nss
 	$(CP) -v -RL $(tgt_src_dir)/dist/{public,private}/nss/* \
 	/usr/include/nss
-	$(CP) -v -RL $(tgt_src_dir)/dist/Linux*/include/* \
-	/usr/include/nss
 	$(CHMOD) 644 /usr/include/nss/*.h
-	$(INSTALL) -v -m755 $(tgt_src_dir)/dist/Linux*/bin/{certutil,pk12util} \
-	/usr/bin
-	$(SED) -e 's,%prefix%,/usr,' -e 's,%exec_prefix%,/usr,' \
-	-e 's,%libdir%,/usr/lib,' -e 's,%includedir%,/usr/include/nss,' \
-	-e 's,%NSS_VERSION%,3.27.1,' -e '/Requires:/d' \
-	$(tgt_src_dir)/nss/pkg/pkg-config/nss.pc.in > /usr/lib/pkgconfig/nss.pc
+	$(INSTALL) -v -m755 \
+	$(tgt_src_dir)/dist/Linux*/bin/{certutil,nss-config,pk12util} /usr/bin
+	$(INSTALL) -v -m644 $(tgt_src_dir)/dist/Linux*/lib/pkgconfig/nss.pc \
+	/usr/lib/pkgconfig/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2431,9 +2973,12 @@ glib.chroot: glibc.chroot zlib.chroot libffi.chroot util-linux.chroot \
 	elfutils.chroot Python.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-pcre=internal
-	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install
+	$(RM) $(tgt_src_dir)/build
+	$(MKDIR) $(tgt_src_dir)/build
+	cd $(tgt_src_dir)/build && \
+	meson --prefix=/usr -Dselinux=disabled -Dinternal_pcre=true ..
+	cd $(tgt_src_dir)/build && ninja
+	cd $(tgt_src_dir)/build && ninja install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2460,6 +3005,8 @@ libxslt.chroot: glibc.chroot libxml2.chroot
 bzip2.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(SED) -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' $(tgt_src_dir)/Makefile
+	$(SED) -i "s@(PREFIX)/man@(PREFIX)/share/man@g" $(tgt_src_dir)/Makefile
 	$(MAKE) --file=$(tgt_src_dir)/Makefile --directory=$(tgt_src_dir)
 	$(INSTALL) -v $(tgt_src_dir)/libbz2.a /usr/lib
 	$(MAKE) --directory=$(tgt_src_dir) clean
@@ -2469,6 +3016,7 @@ bzip2.chroot: glibc.chroot
 	$(LN) libbz2.so.1.0.6 /usr/lib/libbz2.so.1.0
 	$(LN) libbz2.so.1.0.6 /usr/lib/libbz2.so
 	$(INSTALL) -v -m644 $(tgt_src_dir)/bzlib.h /usr/include
+	$(MAKE) --directory=$(tgt_src_dir) distclean
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2514,20 +3062,20 @@ glue.chroot: glibc.chroot libaio.chroot libxml2.chroot bzip2.chroot \
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-readline.chroot: glibc.chroot
+readline.chroot: glibc.chroot ncurses.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-static \
+	--with-curses
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-resource-agents.chroot: glib.chroot glue.chroot
+resource-agents.chroot: glib.chroot glue.chroot docbook-xsl-nons.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
 	  cd $(tgt_src_dir) && ./autogen.sh; \
 	fi
@@ -2569,7 +3117,8 @@ mhvtl.chroot: glibc.chroot lzo.chroot zlib.chroot
 lzo.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-shared
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-shared \
+	--disable-static
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2588,12 +3137,207 @@ lessfs.chroot: glibc.chroot mhash.chroot openssl.chroot lzo.chroot fuse.chroot \
 	db.chroot tokyocabinet.chroot snappy.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && \
 	DEPS_LIBS="-ltokyocabinet -lfuse -lbz2 -lssl -lcrypto -lpthread" \
         ./configure --prefix=/usr --with-crypto --with-lzo --with-snappy \
 	--without-hamsterdb --with-berkeleydb
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+qemu.chroot: glibc.chroot numactl.chroot libgcrypt.chroot Linux-PAM.chroot \
+	eudev.chroot curl.chroot libaio.chroot bzip2.chroot lzo.chroot \
+	libusb.chroot libxml2.chroot Python.chroot zlib.chroot pixman.chroot \
+	multipath-tools.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	$(RM) $(tgt_src_dir)/build
+	$(MKDIR) $(tgt_src_dir)/build
+	cd $(tgt_src_dir)/build && ../configure --prefix=/usr \
+	--sysconfdir=/etc --target-list=x86_64-softmmu --cpu=x86_64 \
+	--enable-gcrypt --enable-auth-pam --enable-libudev \
+	--enable-mpath --enable-vnc --enable-curl --enable-kvm \
+	--enable-linux-aio --enable-attr --enable-vhost-net \
+	--enable-vhost-scsi --enable-vhost-kernel --enable-libusb --enable-lzo \
+	--enable-bzip2 --enable-numa --enable-libxml2 --enable-tools \
+	--disable-user --disable-linux-user --disable-bsd-user --disable-docs \
+	--disable-guest-agent --disable-guest-agent-msi --disable-modules \
+	--disable-module-upgrades --disable-gnutls --disable-nettle \
+	--disable-auth-pam --disable-sdl --disable-sdl-image --disable-gtk \
+	--disable-vte --disable-curses --disable-iconv --disable-vnc-sasl \
+	--disable-vnc-jpeg --disable-vnc-png --disable-cocoa --disable-virtfs \
+	--disable-virtiofsd --disable-xen --disable-xen-pci-passthrough \
+	--disable-brlapi --disable-membarrier --disable-fdt --disable-hax \
+	--disable-hvf --disable-whpx --disable-rdma --disable-pvrdma \
+	--disable-vde --disable-netmap --disable-linux-io-uring \
+	--disable-cap-ng --disable-vhost-vsock --disable-vhost-user \
+	--disable-vhost-user-blk-server --disable-vhost-vdpa --disable-spice \
+	--disable-rbd --disable-libiscsi --disable-libnfs --disable-smartcard \
+	--disable-u2f --disable-live-block-migration --disable-usb-redir \
+	--disable-snappy --disable-lzfse --disable-zstd --disable-tpm \
+	--disable-libssh --disable-replication --disable-opengl \
+	--disable-virglrenderer --disable-xfsctl --disable-qom-cast-debug \
+	--disable-bochs --disable-cloop --disable-dmg --disable-qcow1 \
+	--disable-vdi --disable-vvfat --disable-qed --disable-parallels \
+	--disable-crypto-afalg --disable-capstone --disable-libpmem \
+	--disable-xkbcommon --disable-libdaxctl
+	$(CP) /usr/include/gnu/stubs-64.h /usr/include/gnu/stubs-32.h
+	$(MAKE) --directory=$(tgt_src_dir)/build
+	$(MAKE) --directory=$(tgt_src_dir)/build install
+	$(RM) /usr/include/gnu/stubs-32.h
+	$(RM) /usr/share/qemu/edk2-*
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+pixman.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libvirt.chroot: glibc.chroot perl.chroot Python.chroot libxml2.chroot \
+	libxslt.chroot nfs-utils.chroot gnutls.chroot yajl.chroot \
+	qemu.chroot attr.chroot util-linux.chroot eudev.chroot \
+	curl.chroot numactl.chroot openwsman.chroot libpciaccess.chroot \
+	readline.chroot multipath-tools.chroot lvm2.chroot ncurses.chroot \
+	iptables.chroot dnsmasq.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	$(RM) $(tgt_src_dir)/build
+	$(MKDIR) $(tgt_src_dir)/build
+	cd $(tgt_src_dir) && meson build --prefix=/usr \
+	-Dapparmor=disabled -Dattr=enabled -Daudit=disabled \
+	-Dbash_completion=disabled -Dblkid=enabled -Dcapng=disabled \
+	-Dcurl=enabled -Ddocs=disabled -Ddriver_bhyve=disabled \
+	-Ddriver_esx=disabled -Ddriver_hyperv=disabled \
+	-Ddriver_interface=enabled -Ddriver_libvirtd=enabled \
+	-Ddriver_libxl=disabled -Ddriver_lxc=disabled -Ddriver_network=enabled \
+	-Ddriver_openvz=disabled -Ddriver_qemu=enabled -Dqemu_user=qemu \
+	-Dqemu_group=qemu -Ddriver_remote=enabled \
+	-Ddriver_secrets=enabled -Ddriver_test=enabled -Ddriver_vbox=disabled \
+	-Ddriver_vmware=disabled -Ddriver_vz=disabled -Ddtrace=disabled \
+	-Dexpensive_tests=disabled -Dfirewalld=disabled \
+	-Dfirewalld_zone=disabled -Dfuse=disabled -Dgit_werror=disabled \
+	-Dglusterfs=disabled -Dhost_validate=disabled -Dinit_script=none \
+	-Dlibiscsi=disabled -Dlibnl=disabled -Dlibpcap=disabled \
+	-Dlibssh=disabled -Dlibssh2=disabled -Dlogin_shell=enabled \
+	-Dnetcf=disabled -Dnls=disabled -Dno_git=false -Dnss=disabled \
+	-Dnumactl=enabled -Dnumad=disabled -Dopenwsman=enabled \
+	-Dpciaccess=enabled -Dpm_utils=disabled -Dpolkit=disabled \
+	-Dreadline=enabled -Dremote_default_mode=legacy -Drpath=disabled \
+	-Dsanlock=disabled -Dsasl=disabled -Dsecdriver_apparmor=disabled \
+	-Dsecdriver_selinux=disabled -Dselinux=disabled -Dstorage_dir=enabled \
+	-Dstorage_disk=enabled -Dstorage_fs=enabled -Dstorage_gluster=disabled \
+	-Dstorage_iscsi=disabled -Dstorage_iscsi_direct=disabled \
+	-Dstorage_lvm=enabled -Dstorage_mpath=enabled -Dstorage_rbd=disabled \
+	-Dstorage_scsi=enabled -Dstorage_sheepdog=disabled \
+	-Dstorage_vstorage=disabled -Dstorage_zfs=disabled \
+	-Dsysctl_config=enabled -Dsystem=false -Dtest_coverage=false \
+	-Dtests=disabled -Dudev=enabled -Dwireshark_dissector=disabled \
+	-Dyajl=enabled
+	cd $(tgt_src_dir) && ninja -C build
+	cd $(tgt_src_dir) && ninja -C build install
+	$(CP) -R $(tgt_src_dir)/docs/schemas /usr/share/libvirt/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+yajl.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure -p /usr
+	$(MAKE) --jobs=1 --directory=$(tgt_src_dir)
+	$(MAKE) --jobs=1 --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+iptables.chroot: glibc.chroot libmnl.chroot libnftnl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libnftnl.chroot: glibc.chroot libmnl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+dnsmasq.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) PREFIX=/usr install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libguestfs.chroot: glibc.chroot qemu.chroot gperf.chroot perl.chroot \
+	Python.chroot libxml2.chroot ncurses.chroot busybox.chroot \
+	xorriso.chroot pcre.chroot augeas.chroot file.chroot \
+	jansson.chroot hivex.chroot fuse.chroot guestfs_app.chroot \
+	libvirt.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(SED) -i 's,/usr/bin/ld,ld,' $(tgt_src_dir)/configure
+	cd $(tgt_src_dir) && NCURSES_CONFIG="ncursesw6-config" \
+	HAVE_RPM_FALSE="#" HAVE_DPKG_FALSE="#" HAVE_PACMAN_FALSE="#" \
+	./configure --prefix=/usr --exec-prefix=/usr --sysconfdir=/etc \
+	--disable-appliance --disable-daemon --with-distro="ESOS"
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) DESTDIR=/ install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+xorriso.chroot: glibc.chroot readline.chroot acl.chroot attr.chroot \
+	zlib.chroot bzip2.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-libreadline \
+	--enable-libacl --enable-xattr --enable-zlib --enable-jtethreads \
+	--enable-libbz2
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(LN) -sf xorriso /usr/bin/mkisofs
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+augeas.chroot: glibc.chroot readline.chroot libxml2.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+hivex.chroot: glibc.chroot libxml2.chroot perl.chroot Python.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(SED) -i 's,/usr/bin/ld,ld,' $(tgt_src_dir)/configure
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-nls \
+	--enable-perl --enable-python --disable-ruby
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+guestfs_app.chroot:
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MKDIR) /usr/lib/guestfs
+	$(CP) --sparse=always $(tgt_src_dir)/* /usr/lib/guestfs/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2624,7 +3368,8 @@ fuse.chroot: glibc.chroot
 db.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir)/build_unix && ../dist/configure --prefix=/usr
+	cd $(tgt_src_dir)/build_unix && ../dist/configure --prefix=/usr \
+	--enable-compat185
 	$(MAKE) --directory=$(tgt_src_dir)/build_unix
 	$(MAKE) --directory=$(tgt_src_dir)/build_unix install_setup
 	$(MAKE) --directory=$(tgt_src_dir)/build_unix install_include
@@ -2636,13 +3381,18 @@ db.chroot: glibc.chroot
 snappy.chroot: glibc.chroot gcc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && CXX="g++ -std=c++98" ./configure --prefix=/usr
-	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install
+	$(RM) $(tgt_src_dir)/build
+	$(MKDIR) $(tgt_src_dir)/build
+	cd $(tgt_src_dir)/build && cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	-DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF \
+	-DBUILD_TESTS=OFF -DSNAPPY_BUILD_TESTS=OFF ../
+	cd $(tgt_src_dir)/build && cmake ../
+	$(MAKE) --directory=$(tgt_src_dir)/build
+	$(MAKE) --directory=$(tgt_src_dir)/build install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-fence-agents.chroot: glibc.chroot nss.chroot Python.chroot Net-Telnet.chroot \
+fence-agents.chroot: glibc.chroot nss.chroot Python.chroot perl.chroot \
 	openwsman.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
@@ -2667,24 +3417,12 @@ curl.chroot: glibc.chroot openssl.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-Net-Telnet.chroot: perl_lib = $(wildcard /usr/lib/perl5/5.*)
-Net-Telnet.chroot: perl.chroot
+fio.chroot: glibc.chroot libaio.chroot numactl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && PERL5LIB="$(perl_lib)" /usr/bin/perl \
-	Makefile.PL PREFIX=/usr PERL_LIB="$(perl_lib)" \
-	PERL_ARCHLIB="$(perl_lib)/x86_64-linux"
-	$(MAKE) --directory=$(tgt_src_dir) PERL5LIB="$(perl_lib)"
-	$(MAKE) --directory=$(tgt_src_dir) PERL5LIB="$(perl_lib)" install
-	$(TOUCH) $(@)
-	$(QUIET) $(ECHO) "### Done $(@)"
-
-fio.chroot: glibc.chroot libaio.chroot
-	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-native
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) prefix=/usr \
-	mandir=/usr/share/man install
+	$(MAKE) --directory=$(tgt_src_dir) mandir=/usr/share/man install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2733,7 +3471,7 @@ open-fcoe.chroot: glibc.chroot open-lldp.chroot libpciaccess.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-open-lldp.chroot: glibc.chroot libconfig.chroot libnl.chroot
+open-lldp.chroot: glibc.chroot libconfig.chroot libnl.chroot readline.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(SED) -i 's/^AC_FUNC_MALLOC/dnl AC_FUNC_MALLOC/' \
@@ -2795,12 +3533,14 @@ linux_firmware.chroot:
 	$(CP) -r $(tgt_src_dir)/cbfw* /lib/firmware/
 	$(CP) -r $(tgt_src_dir)/ctfw* /lib/firmware/
 	$(CP) -r $(tgt_src_dir)/ct2fw* /lib/firmware/
+	$(CP) -r $(tgt_src_dir)/qed /lib/firmware/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 dlm.chroot: glibc.chroot corosync.chroot libxml2.chroot pacemaker.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	$(MAKE) --directory=$(tgt_src_dir) USE_SD_NOTIFY=no
 	$(SED) -e '/$$(INSTALL) -d $$(DESTDIR)\/$$(MANDIR)\/man8/ s/^#*/#/' \
 	-i $(tgt_src_dir)/fence/Makefile
@@ -2815,6 +3555,7 @@ ipmitool.chroot: glibc.chroot openssl.chroot ncurses.chroot readline.chroot \
 	libedit.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && \
 	LIBS="-lncursesw -lreadline -ledit" \
 	./configure --prefix=/usr --enable-intf-lan --enable-intf-lanplus
@@ -2827,17 +3568,12 @@ ipmitool.chroot: glibc.chroot openssl.chroot ncurses.chroot readline.chroot \
 sysklogd.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(SED) -i 's/union wait status;/int status;/' $(tgt_src_dir)/syslogd.c
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install_exec
-	$(INSTALL) -D $(tgt_src_dir)/sysklogd.8 \
-	/usr/share/man/man8/sysklogd.8
-	$(INSTALL) -D $(tgt_src_dir)/syslogd.8 \
-	/usr/share/man/man8/syslogd.8
-	$(INSTALL) -D $(tgt_src_dir)/syslog.conf.5 \
-	/usr/share/man/man5/syslog.conf.5
-	$(INSTALL) -D $(tgt_src_dir)/klogd.8 \
-	/usr/share/man/man8/klogd.8
+	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2853,13 +3589,13 @@ less.chroot: glibc.chroot ncurses.chroot
 irqbalance.chroot: glibc.chroot glib.chroot ncurses.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
-	  $(SED) -i "/AC_CHECK_LIB/s/curses/ncursesw/g" \
-	  $(tgt_src_dir)/configure.ac; \
 	  cd $(tgt_src_dir) && ./autogen.sh; \
 	fi
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-numa \
-	--without-systemd --with-glib2 --without-libcap-ng
+	cd $(tgt_src_dir) && NCURSESW_CFLAGS="-D_GNU_SOURCE -D_DEFAULT_SOURCE" \
+	NCURSESW_LIBS="-lncursesw" CFLAGS="-g" ./configure --prefix=/usr \
+	--enable-numa --without-systemd --without-libcap-ng
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -2885,10 +3621,9 @@ postgresql.chroot: glibc.chroot zlib.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-mysql.chroot: glibc.chroot ncurses.chroot busybox.chroot
+mysql.chroot: glibc.chroot ncurses.chroot busybox.chroot procps.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(LN) /bin/busybox /usr/bin/ps
 	cd $(tgt_src_dir) && CXX="g++ -std=c++98" \
 	./configure --prefix=/usr --without-server --without-bench \
 	--enable-thread-safe-client
@@ -2898,7 +3633,6 @@ mysql.chroot: glibc.chroot ncurses.chroot busybox.chroot
 	$(MAKE) --directory=$(tgt_src_dir)/scripts install-binSCRIPTS
 	$(MAKE) --directory=$(tgt_src_dir)/include install
 	$(MAKE) --directory=$(tgt_src_dir)/extra install
-	$(RM) /usr/bin/ps
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -2931,6 +3665,9 @@ libibmad.chroot: glibc.chroot libibumad.chroot libibverbs.chroot
 perftest.chroot: glibc.chroot infiniband-diags.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -2951,8 +3688,7 @@ nrpe.chroot: glibc.chroot openssl.chroot e2fsprogs.chroot
 bcache-tools.chroot: glibc.chroot util-linux.chroot openssl.chroot eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	$(MAKE) --directory=$(tgt_src_dir) \
 	LDLIBS="-lssl -lcrypto -ldl -lblkid -luuid" \
 	make-bcache probe-bcache bcache-register
@@ -2971,6 +3707,8 @@ bcache-tools.chroot: glibc.chroot util-linux.chroot openssl.chroot eudev.chroot
 	/usr/lib/udev/probe-bcache
 	$(INSTALL) -m 0755 $(tgt_src_dir)/bcache-register \
 	/usr/lib/udev/bcache-register
+	$(INSTALL) -m 0755 $(tgt_src_dir)/bcache-export-cached \
+	/usr/lib/udev/bcache-export-cached
 	$(INSTALL) -m 0644 $(tgt_src_dir)/*.8 /usr/share/man/man8/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
@@ -2978,8 +3716,7 @@ bcache-tools.chroot: glibc.chroot util-linux.chroot openssl.chroot eudev.chroot
 EnhanceIO.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	$(INSTALL) -m 0755 $(tgt_src_dir)/CLI/eio_cli /usr/sbin/
 	$(INSTALL) -m 0644 $(tgt_src_dir)/CLI/eio_cli.8 /usr/share/man/man8/
 	$(TOUCH) $(@)
@@ -2998,10 +3735,18 @@ util-linux.chroot: glibc.chroot ncurses.chroot zlib.chroot
 	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/wipefs /usr/sbin/
 	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/lsblk /usr/bin/
 	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/lscpu /usr/bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/wdctl /usr/bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/sfdisk /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/blkdiscard /usr/bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/findmnt /usr/bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/.libs/partx /usr/sbin/
 	$(INSTALL) -m 0755 $(tgt_src_dir)/taskset /usr/bin/
 	$(INSTALL) -m 0755 $(tgt_src_dir)/flock /usr/bin/
-	$(INSTALL) -m 0755 $(tgt_src_dir)/blkdiscard /usr/bin/
 	$(INSTALL) -m 0755 $(tgt_src_dir)/agetty /sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/mkfs /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/sulogin /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/dmesg /bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/su /bin/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3022,10 +3767,10 @@ thin-provisioning-tools.chroot: glibc.chroot gcc.chroot expat.chroot \
 expat.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --without-docbook \
+	--without-xmlwf
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) prefix=/usr \
-	man1dir=/usr/share/man/man1 install
+	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3036,13 +3781,14 @@ boost.chroot: glibc.chroot gcc.chroot
 	  cd $(tgt_src_dir) && ./bootstrap.sh --prefix=/usr; \
 	fi
 	cd $(tgt_src_dir) && ./b2 install --without-atomic --without-chrono \
-	--without-context --without-coroutine --without-date_time \
-	--without-exception --without-filesystem --without-graph \
-	--without-graph_parallel --without-iostreams --without-locale \
-	--without-log --without-math --without-mpi \
-	--without-python --without-random --without-regex \
-	--without-serialization --without-signals --without-system \
-	--without-test --without-timer --without-wave
+	--without-context --without-contract --without-coroutine \
+	--without-date_time --without-exception --without-fiber \
+	--without-filesystem --without-graph --without-graph_parallel \
+	--without-locale --without-log --without-math \
+	--without-mpi --witout-program_options --without-python \
+	--without-random --without-regex --without-serialization \
+	--without-stacktrace --without-system --without-test --without-timer \
+	--witout-type_erasure --without-wave
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3103,12 +3849,14 @@ sysstat.chroot: glibc.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-pciutils.chroot: glibc.chroot zlib.chroot
+pciutils.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes PREFIX=/usr
-	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes PREFIX=/usr install
-	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes PREFIX=/usr install-lib
+	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes ZLIB=no PREFIX=/usr
+	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes ZLIB=no PREFIX=/usr \
+	install
+	$(MAKE) --directory=$(tgt_src_dir) SHARED=yes ZLIB=no PREFIX=/usr \
+	install-lib
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3126,6 +3874,7 @@ tar.chroot: glibc.chroot acl.chroot
 net-snmp.chroot: glibc.chroot gcc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr \
 	--with-default-snmp-version="3" --with-sys-contact="@@no.where" \
 	--with-sys-location="Unknown" --with-logfile="/var/log/snmpd.log" \
@@ -3143,7 +3892,6 @@ net-snmp.chroot: glibc.chroot gcc.chroot
 nut.chroot: glibc.chroot net-snmp.chroot libusb_compat.chroot freeipmi.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(LN) /bin/busybox /usr/bin/env
 	cd $(tgt_src_dir) && CXX="g++ -std=c++98" \
 	./configure --prefix=/usr --sysconfdir=/etc --without-dev \
 	--with-serial --with-usb --with-snmp --without-cgi \
@@ -3159,7 +3907,6 @@ nut.chroot: glibc.chroot net-snmp.chroot libusb_compat.chroot freeipmi.chroot
 	$(MAKE) --directory=$(tgt_src_dir)/drivers install
 	$(MAKE) --directory=$(tgt_src_dir)/lib install
 	$(MAKE) --directory=$(tgt_src_dir)/server install
-	$(RM) /usr/bin/env
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3230,6 +3977,8 @@ libgcrypt.chroot: glibc.chroot libgpg-error.chroot
 libgpg-error.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(SED) -i 's/namespace/pkg_&/' $(tgt_src_dir)/src/Makefile.{am,in} \
+	$(tgt_src_dir)/src/mkstrtable.awk
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -3328,10 +4077,14 @@ nsca.chroot: glibc.chroot libmcrypt.chroot
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 btrfs-progs.chroot: glibc.chroot util-linux.chroot attr.chroot zlib.chroot \
-	acl.chroot e2fsprogs.chroot
+	acl.chroot e2fsprogs.chroot Python.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-documentation
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-documentation \
+	--disable-zstd
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3340,26 +4093,26 @@ btrfs-progs.chroot: glibc.chroot util-linux.chroot attr.chroot zlib.chroot \
 attr.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install install-lib install-dev
+	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 acl.chroot: glibc.chroot attr.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install install-lib
-	$(MAKE) --directory=$(tgt_src_dir)/include \
-	PKG_INC_DIR=/usr/include install-dev
+	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-htop.chroot: glibc.chroot ncurses.chroot
+htop.chroot: glibc.chroot ncurses.chroot Python.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(SED) -i 's@/usr/bin/env python$$@/usr/bin/env python3@' \
+	$(tgt_src_dir)/scripts/MakeHeader.py
 	cd $(tgt_src_dir) && ./autogen.sh
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
@@ -3378,7 +4131,7 @@ dmidecode.chroot: glibc.chroot
 xmlrpc-c.chroot: glibc.chroot gcc.chroot curl.chroot libxml2.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && CXX="g++ -std=c++98" ./configure --prefix=/usr \
+	cd $(tgt_src_dir) && ./configure --prefix=/usr \
 	--disable-wininet-client --disable-libwww-client --disable-cgi-server \
 	--enable-curl-client --enable-libxml2-backend
 	$(MAKE) --jobs=1 --directory=$(tgt_src_dir)
@@ -3393,7 +4146,7 @@ stunnel.chroot: glibc.chroot openssl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
-	--with-ssl="/usr"
+	--with-ssl="/usr" --with-threads=fork
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir)/src install-exec
 	$(MAKE) --directory=$(tgt_src_dir)/doc install-data
@@ -3413,12 +4166,13 @@ sudo.chroot: glibc.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-rsync.chroot: glibc.chroot
+rsync.chroot: glibc.chroot attr.chroot acl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
+	$(INSTALL) -m 0755 $(tgt_src_dir)/support/rsync-no-vanished /usr/bin/
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3448,7 +4202,7 @@ multipath-tools.chroot: glibc.chroot lvm2.chroot readline.chroot \
 	eudev.chroot userspace-rcu.chroot json-c.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(SED) -i '41,49 s/^#*/#/' $(tgt_src_dir)/Makefile.inc
+	$(SED) -i '40,53 s/^#*/#/' $(tgt_src_dir)/Makefile.inc
 	$(SED) -i 's/-lreadline$$/-lreadline -lncursesw/' \
 	$(tgt_src_dir)/multipathd/Makefile
 	$(MAKE) --directory=$(tgt_src_dir) LIB="usr/lib"
@@ -3456,6 +4210,8 @@ multipath-tools.chroot: glibc.chroot lvm2.chroot readline.chroot \
 	libudevdir=/usr/lib/udev install
 	$(SED) -i 's/"\/sbin\//"\/usr\/sbin\//' \
 	/usr/lib/udev/rules.d/66-kpartx.rules
+	$(SED) -i '/systemd-run/c\RUN+="/usr/bin/udevadm trigger --action=add $$sys$$devpath"' \
+	/usr/lib/udev/rules.d/56-multipath.rules
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3489,11 +4245,13 @@ libarchive.chroot: glibc.chroot bzip2.chroot lzo.chroot zlib.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-rasdaemon.chroot: glibc.chroot
+rasdaemon.chroot: glibc.chroot perl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --localstatedir=/var \
-	--sysconfdir=/etc --enable-aer --enable-mce
+	--sysconfdir=/etc --enable-aer --enable-mce --enable-sqlite3 \
+	--enable-extlog --enable-hisi-ns-decode --enable-non-standard \
+	--enable-devlink
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3566,10 +4324,10 @@ iperf3.chroot: glibc.chroot
 nmon.chroot: glibc.chroot gcc.chroot ncurses.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(CC) -o $(tgt_src_dir)/nmon $(tgt_src_dir)/lmon.c \
-	-g -O3 -Wall -D JFS -D GETUSER -D LARGEMEM -lncursesw -lm -g \
-	-D KERNEL_2_6_18 -D X86
+	$(CC) -o $(tgt_src_dir)/nmon $(tgt_src_dir)/lmon.c -g -O3 -Wall \
+	-lncursesw -lm -D X86
 	$(INSTALL) -D -m 0755 -v $(tgt_src_dir)/nmon /usr/sbin/nmon
+	$(RM) $(tgt_src_dir)/nmon
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3593,14 +4351,17 @@ munin-c.chroot: glibc.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-open-iscsi.chroot: glibc.chroot open-isns.chroot util-linux.chroot
+open-iscsi.chroot: glibc.chroot open-isns.chroot util-linux.chroot kmod.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --directory=$(tgt_src_dir) user
+	$(MAKE) --directory=$(tgt_src_dir) LIBADD="-lkmod" NO_SYSTEMD=1 \
+	OPTFLAGS="-Os -Wno-format-truncation -DNO_SYSTEMD" \
+	PKG_CONFIG="pkg-config" user
 	$(MAKE) --directory=$(tgt_src_dir) install_programs
 	$(MAKE) --directory=$(tgt_src_dir) install_doc
 	$(MAKE) --directory=$(tgt_src_dir) install_etc
 	$(MAKE) --directory=$(tgt_src_dir) install_iface
+	$(MAKE) --directory=$(tgt_src_dir) install_libopeniscsiusr
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3618,7 +4379,7 @@ open-isns.chroot: glibc.chroot openssl.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-coreutils.chroot: glibc.chroot perl.chroot
+coreutils.chroot: glibc.chroot gcc.chroot perl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && FORCE_UNSAFE_CONFIGURE=1 ./configure --prefix=/usr
@@ -3627,14 +4388,14 @@ coreutils.chroot: glibc.chroot perl.chroot
 	$(INSTALL) -m 0755 $(tgt_src_dir)/src/dd /bin/dd
 	$(INSTALL) -m 0755 $(tgt_src_dir)/src/pr /bin/pr
 	$(INSTALL) -m 0755 $(tgt_src_dir)/src/readlink /usr/bin/readlink
+	$(INSTALL) -m 0755 $(tgt_src_dir)/src/od /usr/bin/od
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
 open-vm-tools.chroot: glibc.chroot gcc.chroot glib.chroot libdnet.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
+	$(call apply_pkg_patch)
 	$(SED) -i '/CFLAGS/s/-Werror//' $(tgt_src_dir)/configure
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-deploypkg \
 	--disable-grabbitmqproxy --disable-vgauth --without-root-privileges \
@@ -3671,6 +4432,11 @@ openwsman.chroot: glibc.chroot gcc.chroot Python.chroot libxml2.chroot \
 	openssl.chroot swig.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(SED) -i "s/2.6.1/2.7.0/" $(tgt_src_dir)/configure.ac
+	$(SED) -i "s/OPENWSMAN_MINOR=6/OPENWSMAN_MINOR=7/" \
+	$(tgt_src_dir)/configure.ac
+	$(SED) -i "s/OPENWSMAN_PATCH=1/OPENWSMAN_PATCH=0/" \
+	$(tgt_src_dir)/configure.ac
 	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
 	  cd $(tgt_src_dir) && ./autoconfiscate.sh \
 	  --ignore-deprecation-warning; \
@@ -3685,6 +4451,7 @@ openwsman.chroot: glibc.chroot gcc.chroot Python.chroot libxml2.chroot \
 	$(MAKE) --directory=$(tgt_src_dir)/src install
 	$(MAKE) --directory=$(tgt_src_dir)/doc install
 	$(MAKE) --directory=$(tgt_src_dir)/bindings install
+	$(MAKE) --directory=$(tgt_src_dir) install-data-local
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3728,9 +4495,14 @@ tzdata.chroot: glibc.chroot
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-nvme-cli.chroot: glibc.chroot eudev.chroot
+nvme-cli.chroot: glibc.chroot eudev.chroot json-c.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(QUIET) if ! $(GREP) -q no-format-truncation \
+	  $(tgt_src_dir)/Makefile; then \
+	  $(SED) -ri 's/^(CFLAGS.*\+=.*)/\1 -Wno-format-truncation/' \
+	  $(tgt_src_dir)/Makefile; \
+	fi
 	$(MAKE) --directory=$(tgt_src_dir) PREFIX=/usr LIBUDEV=0
 	$(MAKE) --directory=$(tgt_src_dir) install-man PREFIX=/usr
 	$(MAKE) --directory=$(tgt_src_dir) install-bin PREFIX=/usr
@@ -3741,13 +4513,14 @@ freetype.chroot: glibc.chroot bzip2.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-harfbuzz=no \
-	--with-png=no
+	--with-png=no --enable-freetype-config --disable-static
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
+	$(RM) /usr/share/man/man1/freetype-config.1
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
-ledmon.chroot: glibc.chroot gcc.chroot sg3_utils.chroot
+ledmon.chroot: glibc.chroot gcc.chroot sg3_utils.chroot eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(MAKE) --jobs=1 --directory=$(tgt_src_dir)
@@ -3821,6 +4594,15 @@ git.chroot: glibc.chroot curl.chroot expat.chroot zlib.chroot openssh.chroot \
 findutils.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(QUIET) if ! $(GREP) -q _IO_IN_BACKUP \
+	  $(tgt_src_dir)/gl/lib/stdio-impl.h; then \
+	  $(SED) -i 's/IO_ftrylockfile/IO_EOF_SEEN/' \
+	  $(tgt_src_dir)/gl/lib/*.c; \
+	  $(SED) -i '/unistd/a #include <sys/sysmacros.h>' \
+	  $(tgt_src_dir)/gl/lib/mountlist.c; \
+	  $(ECHO) "#define _IO_IN_BACKUP 0x100" >> \
+	  $(tgt_src_dir)/gl/lib/stdio-impl.h; \
+	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/usr
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
@@ -3841,10 +4623,9 @@ nfs-utils.chroot: glibc.chroot rpcbind.chroot libevent.chroot keyutils.chroot \
 rpcbind.chroot: glibc.chroot libtirpc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	- $(PATCH) -r - -N -d $(tgt_src_dir) -p1 < \
-	$(chroot_build)/misc/$(notdir $(tgt_src_dir)).patch
 	cd $(tgt_src_dir) && ./configure --prefix=/usr \
-	--without-systemdsystemunitdir
+	--bindir=/sbin --sbindir=/sbin --with-rpcuser=root \
+	--enable-warmstarts --without-systemdsystemunitdir
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3853,10 +4634,6 @@ rpcbind.chroot: glibc.chroot libtirpc.chroot
 libtirpc.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(SED) '/stdlib.h/a#include <stdint.h>' \
-	-i $(tgt_src_dir)/src/xdr_sizeof.c
-	$(SED) '/key_secret_is/s/secret/secretkey/' \
-	-i $(tgt_src_dir)/src/libtirpc.map
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
 	--disable-static --disable-gssapi
 	$(MAKE) --directory=$(tgt_src_dir)
@@ -3867,7 +4644,7 @@ libtirpc.chroot: glibc.chroot
 libevent.chroot: glibc.chroot openssl.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-static
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3876,8 +4653,8 @@ libevent.chroot: glibc.chroot openssl.chroot
 keyutils.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) LIBDIR=/usr/lib install
+	$(MAKE) --directory=$(tgt_src_dir) NO_ARLIB=1
+	$(MAKE) --directory=$(tgt_src_dir) NO_ARLIB=1 LIBDIR=/usr/lib install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3902,16 +4679,11 @@ hdparm.chroot: glibc.chroot
 kbd.chroot: glibc.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-vlock
-	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) install
-	$(TOUCH) $(@)
-	$(QUIET) $(ECHO) "### Done $(@)"
-
-pcre.chroot: glibc.chroot
-	$(QUIET) $(ECHO) "### Building $(@)"
-	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(call apply_pkg_patch)
+	$(SED) -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' $(tgt_src_dir)/configure
+	$(SED) -i 's/resizecons.8 //' $(tgt_src_dir)/docs/man/man8/Makefile.in
+	cd $(tgt_src_dir) && PKG_CONFIG_PATH=/tools/lib/pkgconfig \
+	./configure --prefix=/usr --disable-vlock
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3934,7 +4706,7 @@ nginx.chroot: glibc.chroot pcre.chroot zlib.chroot openssl.chroot
 dosfstools.chroot: glibc.chroot eudev.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-compat-symlinks
 	$(MAKE) --directory=$(tgt_src_dir)
 	$(MAKE) --directory=$(tgt_src_dir) install
 	$(TOUCH) $(@)
@@ -3954,7 +4726,8 @@ blktrace.chroot: glibc.chroot Python.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
 	$(MAKE) --directory=$(tgt_src_dir)
-	$(MAKE) --directory=$(tgt_src_dir) prefix=/usr install
+	$(MAKE) --directory=$(tgt_src_dir) \
+	prefix=/usr mandir=/usr/share/man install
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -3997,7 +4770,8 @@ iozone3.chroot: glibc.chroot
 telegraf.chroot:
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
-	$(INSTALL) -m 0755 $(tgt_src_dir)/usr/bin/telegraf /usr/bin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/usr/bin/telegraf.upx \
+	/usr/bin/telegraf
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
@@ -4005,8 +4779,9 @@ sbd.chroot: glibc.chroot glib.chroot libqb.chroot corosync.chroot \
 	pacemaker.chroot libxml2.chroot
 	$(QUIET) $(ECHO) "### Building $(@)"
 	$(call chroot_only)
+	$(call apply_pkg_patch)
 	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
-	  cd $(tgt_src_dir) && autoreconf -fiv; \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
 	fi
 	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
 	--localstatedir=/var --enable-shared-disk
@@ -4038,6 +4813,492 @@ lftp.chroot: glibc.chroot openssl.chroot readline.chroot ncurses.chroot \
 	$(TOUCH) $(@)
 	$(QUIET) $(ECHO) "### Done $(@)"
 
+ndctl.chroot: glibc.chroot eudev.chroot util-linux.chroot json-c.chroot \
+	keyutils.chroot kmod.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
+	--without-bash --without-systemd --with-keyutils --disable-docs
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install-exec
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+kmod.chroot: glibc.chroot zlib.chroot openssl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
+	--without-xz --with-zlib --without-openssl
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install-exec
+	$(MAKE) --directory=$(tgt_src_dir) install-includeHEADERS
+	$(MAKE) --directory=$(tgt_src_dir) install-pkgconfigDATA
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+docbook-xsl-nons.chroot: docbook = /usr/share/xml/docbook
+docbook-xsl-nons.chroot: stylesheets = $(docbook)/xsl-stylesheets-nons-1.79.2
+docbook-xsl-nons.chroot: libxml2.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	$(INSTALL) -v -m 0755 -d $(stylesheets)
+	cd $(tgt_src_dir) && $(CP) -v -R VERSION assembly common eclipse epub \
+	epub3 extensions fo highlighting html htmlhelp images javahelp lib \
+	manpages params profiling roundtrip slides template tests tools \
+	webhelp website xhtml xhtml-1_1 xhtml5 $(stylesheets)/
+	$(LN) VERSION $(stylesheets)/VERSION.xsl
+	$(INSTALL) -v -m 0644 -D $(tgt_src_dir)/README \
+	/usr/share/doc/docbook-xsl-nons-1.79.2/README.txt
+	$(INSTALL) -v -m 0644 $(tgt_src_dir)/RELEASE-NOTES* \
+	$(tgt_src_dir)/NEWS* /usr/share/doc/docbook-xsl-nons-1.79.2
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+acpid.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(INSTALL) -v -m 0755 -d /etc/acpi/events
+	$(SED) 's,/acpid/,/acpi/,' $(tgt_src_dir)/samples/power > \
+	/etc/acpi/events/power
+	$(INSTALL) -v -m 0755 $(tgt_src_dir)/samples/power.sh /etc/acpi/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+ibutils.chroot: glibc.chroot opensm.chroot libibumad.chroot tcl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	cd $(tgt_src_dir) && ./autogen.sh
+	cd $(tgt_src_dir) && ./configure --prefix=/usr \
+	--without-tk-lib --without-graphviz-lib
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+tcl.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir)/unix && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)/unix
+	$(MAKE) --directory=$(tgt_src_dir)/unix mandir=/usr/share/man install
+	$(CHMOD) -v u+w /usr/lib/libtcl8.6.so
+	$(MAKE) --directory=$(tgt_src_dir)/unix install-private-headers
+	$(LN) -v tclsh8.6 /usr/bin/tclsh
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+numactl.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+iowatcher.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) prefix=/usr install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+iotop.chroot: glibc.chroot Python.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && python3 ./setup.py install --prefix=/usr
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+node_exporter.chroot:
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(INSTALL) -m 0755 $(tgt_src_dir)/node_exporter.upx \
+	/usr/bin/node_exporter
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libcap.chroot: glibc.chroot Linux-PAM.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir) lib=lib
+	$(MAKE) --directory=$(tgt_src_dir) lib=lib \
+	PKGCONFIGDIR=/usr/lib/pkgconfig install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+sedutil.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && autoreconf --install; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+squashfs-tools.chroot: glibc.chroot zlib.chroot xz.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir)/squashfs-tools clean
+	$(MAKE) --directory=$(tgt_src_dir)/squashfs-tools unsquashfs \
+	EXTRA_LDFLAGS="-static" XZ_SUPPORT=1
+	$(INSTALL) -D $(tgt_src_dir)/squashfs-tools/unsquashfs \
+	$(chroot_build)/initramfs/usr/bin/unsquashfs
+	$(MAKE) --directory=$(tgt_src_dir)/squashfs-tools clean
+	$(MAKE) --directory=$(tgt_src_dir)/squashfs-tools XZ_SUPPORT=1
+	$(MAKE) --directory=$(tgt_src_dir)/squashfs-tools install \
+	INSTALL_DIR="/usr/bin"
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+prometheus.chroot:
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(INSTALL) -m 0755 $(tgt_src_dir)/prometheus.upx /usr/bin/prometheus
+	$(INSTALL) -m 0755 $(tgt_src_dir)/promtool.upx /usr/bin/promtool
+	$(MKDIR) /etc/prometheus
+	$(CP) $(tgt_src_dir)/prometheus.yml /etc/prometheus/
+	$(CP) -R $(tgt_src_dir)/console_libraries /etc/prometheus/
+	$(CP) -R $(tgt_src_dir)/consoles /etc/prometheus/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+jq.chroot: glibc.chroot oniguruma.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+oniguruma.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+procps.chroot: glibc.chroot numactl.chroot ncurses.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-numa \
+	--with-ncurses --without-systemd --without-elogind --disable-modern-top
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+haveged.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+msmtp.chroot: glibc.chroot openssl.chroot gnutls.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-tls=gnutls \
+	--without-libgsasl --without-libidn --without-libsecret \
+	--without-macosx-keyring --with-msmtpd
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+gnutls.chroot: glibc.chroot nettle.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-guile \
+	--with-nettle-mini --with-included-libtasn1 --with-included-unistring \
+	--without-p11-kit
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+nettle.chroot: glibc.chroot openssl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --enable-mini-gmp
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+tcpdump.chroot: glibc.chroot libpcap.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+vim.chroot: glibc.chroot ncurses.chroot acl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-nls
+	$(SED) -e '/LINKIT = ln -f/ s/^#*//g' -i $(tgt_src_dir)/src/Makefile
+	$(SED) -e '/LINKIT = @echo/ s/^#*/#/g' -i $(tgt_src_dir)/src/Makefile
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(SED) -e "/if has('mouse')/,+6 s/^/\"/" \
+	-i /usr/share/vim/vim*/defaults.vim
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+sdparm.chroot: glibc.chroot sg3_utils.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+iproute2.chroot: glibc.chroot libpcap.chroot db.chroot libmnl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libmnl.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+file.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+jansson.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+pcre.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-static
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+pv.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+gptfdisk.chroot: glibc.chroot util-linux.chroot ncurses.chroot popt.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MKDIR) /usr/sbin
+	$(INSTALL) -m 0755 $(tgt_src_dir)/gdisk /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/cgdisk /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/sgdisk /usr/sbin/
+	$(INSTALL) -m 0755 $(tgt_src_dir)/fixparts /usr/sbin/
+	$(MKDIR) /usr/share/man/man8
+	$(INSTALL) -m 0644 $(tgt_src_dir)/gdisk.8 /usr/share/man/man8/
+	$(INSTALL) -m 0644 $(tgt_src_dir)/cgdisk.8 /usr/share/man/man8/
+	$(INSTALL) -m 0644 $(tgt_src_dir)/sgdisk.8 /usr/share/man/man8/
+	$(INSTALL) -m 0644 $(tgt_src_dir)/fixparts.8 /usr/share/man/man8/
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+usbutils.chroot: glibc.chroot libusb.chroot curl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr \
+	--datadir=/usr/share/hwdata
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(INSTALL) -d -m 0755 /usr/share/hwdata/
+	curl http://www.linux-usb.org/usb.ids \
+	--output /usr/share/hwdata/usb.ids
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+libvirtd_exporter.chroot:
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(INSTALL) -m 0755 $(tgt_src_dir)/libvirtd_exporter \
+	/usr/bin/libvirtd_exporter
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+xz.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+wget.chroot: glibc.chroot zlib.chroot openssl.chroot pcre.chroot \
+	util-linux.chroot cacerts.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --sysconfdir=/etc \
+	--with-ssl=openssl
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+cacerts.chroot: glibc.chroot openssl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(INSTALL) -v -d -m 0755 /etc/ssl/local
+	openssl x509 -in $(tgt_src_dir)/root.crt -text -fingerprint \
+	-setalias "CAcert Class 1 root" -addtrust serverAuth \
+	-addtrust emailProtection -addtrust codeSigning > \
+	/etc/ssl/local/CAcert_Class_1_root.pem
+	$(INSTALL) -v -m 0755 $(tgt_src_dir)/make-ca.sh /usr/sbin/make-ca.sh
+	cd $(tgt_src_dir) && /usr/sbin/make-ca.sh
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+mlnx-tools.chroot: glibc.chroot Python.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	PKG_VERSION=$(shell $(CAT) $(tgt_src_dir)/mlnx-tools.spec | \
+	$(GREP) Version: | $(CUT) -d: -f2 | $(TR) -d ' ') \
+	$(MAKE) --directory=$(tgt_src_dir) install UDEV_DIR=/usr/lib/udev
+	$(SED) -i '/param, val/s/line.strip()/line.decode("utf-8").strip()/' \
+	/usr/bin/tc_wrap.py
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+zip.chroot: glibc.chroot bzip2.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir) -f unix/Makefile generic_gcc
+	$(MAKE) --directory=$(tgt_src_dir) -f unix/Makefile prefix=/usr \
+	MANDIR=/usr/share/man/man1 install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+cpuset.chroot: glibc.chroot Python.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && python3 ./setup.py install --prefix=/usr
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+switchtec-user.chroot: glibc.chroot ncurses.chroot openssl.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(call apply_pkg_patch)
+	cd $(tgt_src_dir) && ./configure --with-curses --with-openssl
+	$(SED) -i 's/install -s/install/g' $(tgt_src_dir)/Makefile
+	$(MAKE) --directory=$(tgt_src_dir) V=1
+	$(MAKE) --directory=$(tgt_src_dir) V=1 PREFIX=/usr install-bin
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+memcached.chroot: glibc.chroot libevent.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+bwm-ng.chroot: glibc.chroot ncurses.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(QUIET) if [ ! -f "$(tgt_src_dir)/configure" ]; then \
+	  cd $(tgt_src_dir) && ./autogen.sh; \
+	fi
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --with-ncurses
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+lz4.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) PREFIX=/usr install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+minicom.chroot: glibc.chroot ncurses.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr --disable-nls
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+smp_utils.chroot: glibc.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && ./configure --prefix=/usr
+	$(MAKE) --directory=$(tgt_src_dir)
+	$(MAKE) --directory=$(tgt_src_dir) install
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
+sasutils.chroot: glibc.chroot Python.chroot nvmetcli.chroot \
+	sg3_utils.chroot smp_utils.chroot
+	$(QUIET) $(ECHO) "### Building $(@)"
+	$(call chroot_only)
+	cd $(tgt_src_dir) && python3 ./setup.py install --prefix=/usr
+	$(TOUCH) $(@)
+	$(QUIET) $(ECHO) "### Done $(@)"
+
 
 # post_chroot - Unmount and cleanup after leaving the chroot environment.
 .PHONY: post_chroot
@@ -4047,6 +5308,7 @@ post_chroot:
 	$(QUIET) $(UMOUNT) -vl $(CHROOT_DIR)/sys
 	$(QUIET) $(UMOUNT) -vl $(CHROOT_DIR)/proc
 	$(QUIET) $(UMOUNT) -vl $(CHROOT_DIR)/dev/pts
+	$(QUIET) $(UMOUNT) -vl $(CHROOT_DIR)/dev/shm
 	$(QUIET) $(UMOUNT) -vl $(CHROOT_DIR)/dev
 
 
@@ -4068,8 +5330,8 @@ image:
 	    $(KPARTX) -v -d $(loop_dev); \
 	    $(LOSETUP) -v -d $(loop_dev); \
 	  fi; \
-	  $(RM) -v $(BUILD_DIR)/esos_*.img; \
-	  $(RM) -v $(BUILD_DIR)/esos_*.bz2; \
+	  $(RM) -v $(img_file); \
+	  $(RM) -v $(tar_bz2_img_file); \
 	  $(RM) -v $(BUILD_DIR)/dist_*.txt; \
 	fi
 	$(QUIET) $(ECHO) "### Creating initramfs image..."
@@ -4077,11 +5339,18 @@ image:
 	$(MKNOD) $(INITRAMFS_DIR)/dev/null c 1 3
 	$(MKNOD) $(INITRAMFS_DIR)/dev/console c 5 1
 	$(MKNOD) $(INITRAMFS_DIR)/dev/tty c 5 0
-	$(QUIET) if [ "x$(enable_debug)" != "xyes" ]; then \
-	  $(SED) 's/@@root_size@@/1536m/' $(SRC_DIR)/misc/initramfs_init > \
+	$(QUIET) if [ "x$(enable_qemu)" = "xyes" ] && \
+	  [ "x$(enable_debug)" = "xyes" ]; then \
+	  $(SED) 's/@@root_size@@/3840m/' $(SRC_DIR)/misc/initramfs_init > \
+	  $(INITRAMFS_DIR)/init; \
+	elif [ "x$(enable_qemu)" = "xyes" ]; then \
+	  $(SED) 's/@@root_size@@/2816m/' $(SRC_DIR)/misc/initramfs_init > \
+	  $(INITRAMFS_DIR)/init; \
+	elif [ "x$(enable_debug)" = "xyes" ]; then \
+	  $(SED) 's/@@root_size@@/2816m/' $(SRC_DIR)/misc/initramfs_init > \
 	  $(INITRAMFS_DIR)/init; \
 	else \
-	  $(SED) 's/@@root_size@@/2560m/' $(SRC_DIR)/misc/initramfs_init > \
+	  $(SED) 's/@@root_size@@/1792m/' $(SRC_DIR)/misc/initramfs_init > \
 	  $(INITRAMFS_DIR)/init; \
 	fi
 	$(CHMOD) +x $(INITRAMFS_DIR)/init
@@ -4093,22 +5362,22 @@ image:
 	$(GZIP) > $(CHROOT_DIR)/boot/PRIMARY-initramfs.cpio.gz
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### Setting up the ESOS image file ($(img_file))..."
-	# 4000 MB (not MiB)
-	# 4000000000 B
-	# 4000000000 B / 512 B = 7812500 sectors
-	$(DD) if=/dev/zero of=$(img_file) bs=512 count=0 seek=7812500
-	$(ECHO) -e "2048,819200,EF,*\n821248,4096000,L\n4917248,409600,L\n\
-	5326848,2048000,L\n" | $(SFDISK) --no-reread -uS -L $(img_file)
+	# 8192 MiB (not MB)
+	# 8589934592 B
+	# 8589934592 B / 512 B = 16777216 sectors
+	$(DD) if=/dev/zero of=$(img_file) bs=512 count=0 seek=16777216
+	$(ECHO) -e "2048,2097152,EF,*\n2099200,8388608,L\n10487808,4194304,L\n\
+	14682112,2095104,L\n" | $(SFDISK) --no-reread -uS -L $(img_file)
 	$(LOSETUP) -f --show $(img_file) > $(WORK_DIR)/loop_dev
 	$(KPARTX) -a -s $(loop_dev)
 	$(SLEEP) 1
-	$(MKFS) -t vfat -F 32 -n ESOS_BOOT $$($(ECHO) $(loop_dev) | \
+	$(MKFS_VFAT) -F 32 -n ESOS_BOOT $$($(ECHO) $(loop_dev) | \
 	$(SED) 's/^\/dev/\/dev\/mapper/')p1
-	$(MKFS) -t ext2 -L esos_root $$($(ECHO) $(loop_dev) | \
+	$(MKFS_EXT4) -I 256 -L esos_root $$($(ECHO) $(loop_dev) | \
 	$(SED) 's/^\/dev/\/dev\/mapper/')p2
-	$(MKFS) -t ext2 -L esos_conf $$($(ECHO) $(loop_dev) | \
+	$(MKFS_EXT4) -I 256 -L esos_conf $$($(ECHO) $(loop_dev) | \
 	$(SED) 's/^\/dev/\/dev\/mapper/')p3
-	$(MKFS) -t ext2 -L esos_logs $$($(ECHO) $(loop_dev) | \
+	$(MKFS_EXT4) -I 256 -L esos_logs $$($(ECHO) $(loop_dev) | \
 	$(SED) 's/^\/dev/\/dev\/mapper/')p4
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### Installing image (staging)..."
@@ -4121,25 +5390,20 @@ image:
 	$(CPIO) -pmdvu $(MOUNT_DIR)
 	cd $(CHROOT_DIR) && \
 	$(FIND) . -depth ! -path "./usr/include*" ! -path "*.a" \
-	! -path "*.la" ! -path "./usr/share/doc*" ! -path "./boot*" \
-	! -path "./build*" ! -path "./sources*" ! -path "./tools*" \
-	! -path "./usr/lib/pkgconfig*" ! -path "./usr/lib/gcc" \
+	! -path "*.la" ! -path "./usr/share/doc*" ! -path "./usr/share/xml*" \
+	! -path "./boot*" ! -path "./build*" ! -path "./sources*" \
+	! -path "./tools*" ! -path "./usr/lib/pkgconfig*" \
+	! -path "./usr/lib/gcc" ! -path "./usr/lib/cmake*" \
 	! -path "./bin/cat" ! -path "./bin/echo" ! -path "./bin/ln" \
 	! -path "./bin/pwd" ! -path "./bin/rm" ! -path "./bin/stty" \
 	! -path "./bin/sh" ! -path "./usr/bin/install" \
-	! -path "./etc/resolv.conf" | \
-	$(CPIO) -pmdvu $(STAGING_DIR)
+	! -path "./usr/bin/env" ! -path "./etc/resolv.conf" | \
+	$(CPIO) -pmdvu --sparse $(STAGING_DIR)
 	$(INSTALL) -D $(wildcard $(CHROOT_DIR)/usr/include/python*/pyconfig.h) \
 	$(STAGING_DIR)/usr/include/$(notdir \
 	$(wildcard $(CHROOT_DIR)/usr/include/python*))/pyconfig.h
 	$(MKDIR) $(STAGING_DIR)/usr/share/doc/esos
-	$(QUIET) if [ "$(enable_commercial)" = "yes" ]; then \
-	  $(CP) $(SRC_DIR)/COMMERCIAL_EULA \
-	  $(STAGING_DIR)/usr/share/doc/esos/LICENSE; \
-	else \
-	  $(CP) $(SRC_DIR)/COPYING \
-	  $(STAGING_DIR)/usr/share/doc/esos/LICENSE; \
-	fi
+	$(CP) $(SRC_DIR)/COPYING $(STAGING_DIR)/usr/share/doc/esos/LICENSE
 	$(INSTALL) -m 0644 $(SRC_DIR)/ChangeLog \
 	$(STAGING_DIR)/usr/share/doc/esos/ChangeLog
 	cd $(SRC_DIR)/etc && $(FIND) . -depth ! -path "*/.git*" | \
@@ -4159,7 +5423,8 @@ image:
 	--grub-probe=$(chroot_build)/grub-probe \
 	--efi-directory=$(MOUNT_DIR)/boot --root-directory=$(MOUNT_DIR) \
 	--no-nvram --removable --recheck --debug
-	$(INSTALL) $(SRC_DIR)/misc/grub.cfg $(MOUNT_DIR)/boot/grub/
+	$(SED) 's/@@short_prod@@/$(short_prod)/g' $(SRC_DIR)/misc/grub.cfg > \
+	$(MOUNT_DIR)/boot/grub/grub.cfg
 	$(ECHO) "set slot_ver=$(esos_ver)" > $(MOUNT_DIR)/boot/PRIMARY-version
 	$(INSTALL) $(SRC_DIR)/scripts/conf_sync.sh \
 	$(STAGING_DIR)/usr/local/sbin/
@@ -4173,8 +5438,6 @@ image:
 	$(STAGING_DIR)/usr/local/sbin/
 	$(INSTALL) $(SRC_DIR)/scripts/crm_mon_email.sh \
 	$(STAGING_DIR)/usr/local/bin/
-	$(INSTALL) $(SRC_DIR)/scripts/db_compact.py \
-	$(STAGING_DIR)/usr/local/bin/
 	$(INSTALL) $(SRC_DIR)/scripts/hw_raid_cli.py \
 	$(STAGING_DIR)/usr/local/sbin/
 	$(INSTALL) $(SRC_DIR)/scripts/support_pkg.sh \
@@ -4187,12 +5450,12 @@ image:
 	$(STAGING_DIR)/usr/local/sbin/
 	$(INSTALL) $(SRC_DIR)/scripts/backup_conf.sh \
 	$(STAGING_DIR)/usr/local/sbin/
-	$(QUIET) if [ "$(enable_commercial)" = "yes" ]; then \
-	  $(INSTALL) $(SRC_DIR)/scripts/install_lic.sh \
-	  $(STAGING_DIR)/usr/local/sbin/; \
-	  $(INSTALL) $(SRC_DIR)/scripts/read_cert.sh \
-	  $(STAGING_DIR)/usr/local/sbin/; \
-	fi
+	$(INSTALL) $(SRC_DIR)/scripts/pwatcher.sh \
+	$(STAGING_DIR)/usr/local/sbin/
+	$(INSTALL) $(SRC_DIR)/scripts/sbd_*.sh \
+	$(STAGING_DIR)/usr/local/sbin/
+	$(INSTALL) $(SRC_DIR)/scripts/cluster_*.sh \
+	$(STAGING_DIR)/usr/local/sbin/
 	$(MKDIR) $(STAGING_DIR)/usr/lib/ocf/resource.d
 	$(CP) -R $(SRC_DIR)/misc/ocf/esos \
 	$(STAGING_DIR)/usr/lib/ocf/resource.d/
@@ -4214,8 +5477,6 @@ image:
 	$(STAGING_DIR)/usr/lib/udev/rules.d/
 	$(INSTALL) -m 0755 $(SRC_DIR)/contrib/ceph-rbdnamer \
 	$(STAGING_DIR)/usr/bin/
-	$(MKDIR) $(STAGING_DIR)/usr/local/perf-agent
-	$(INSTALL) $(SRC_DIR)/perf-agent/* $(STAGING_DIR)/usr/local/perf-agent/
 	$(LN) libncursesw.so $(STAGING_DIR)/usr/lib/libncurses.so.5
 	$(ECHO) "$(product) $(esos_ver)" > \
 	$(STAGING_DIR)/etc/esos-release
@@ -4228,11 +5489,13 @@ image:
 	$(XARGS) -0 $(CHMOD) 0755
 	$(FIND) $(STAGING_DIR)/etc/acpi -type f -print0 | \
 	$(XARGS) -0 $(CHMOD) 0755
+	$(FIND) $(STAGING_DIR)/etc/infiniband -name '*.sh' -type f -print0 | \
+	$(XARGS) -0 -r $(CHMOD) 0755
 	$(FIND) $(STAGING_DIR)/etc/etckeeper/*.d -type f ! -path "*/README" \
 	-print0 | $(XARGS) -0 $(CHMOD) 0755
 	$(CHMOD) 4750 $(STAGING_DIR)/usr/local/bin/esos_tui
-	$(CHMOD) 4750 $(STAGING_DIR)/usr/local/bin/esos_tui
-	$(CHMOD) 4755 $(STAGING_DIR)/usr/bin/sudo
+	$(CHMOD) 4111 $(STAGING_DIR)/usr/bin/sudo
+	$(CHMOD) 4755 $(STAGING_DIR)/bin/su
 	$(CHMOD) 640 $(STAGING_DIR)/etc/shadow
 	$(CHOWN) 0:42 $(STAGING_DIR)/etc/shadow
 	$(CHMOD) 600 $(STAGING_DIR)/etc/crontab
@@ -4244,27 +5507,12 @@ image:
 	  $(CHMOD) 4750 $(STAGING_DIR)/usr/bin/vtltape; \
 	  $(CHMOD) 4750 $(STAGING_DIR)/usr/bin/vtllibrary; \
 	fi
-	$(QUIET) if [ "$(with_web_ui)" = "yes" ]; then \
-	  $(CHOWN) -R 104:104 $(STAGING_DIR)/opt/lib/web_ui; \
-	  $(SED) -i 's/^rc\.nginx_enable=.*/rc\.nginx_enable=YES/' \
-	  $(STAGING_DIR)/etc/rc.conf; \
-	  $(SED) -i 's/^rc\.webui_enable=.*/rc\.webui_enable=YES/' \
-	  $(STAGING_DIR)/etc/rc.conf; \
-	fi
-	$(QUIET) if [ "$(with_rpc_agent)" = "yes" ]; then \
-	  $(SED) -i 's/^rc\.stunnel_enable=.*/rc\.stunnel_enable=YES/' \
-	  $(STAGING_DIR)/etc/rc.conf; \
-	  $(SED) -i 's/^rc\.rpcagent_enable=.*/rc\.rpcagent_enable=YES/' \
-	  $(STAGING_DIR)/etc/rc.conf; \
-	fi
 	$(QUIET) if [ "$(enable_login_tui)" = "no" ]; then \
 	  $(TOUCH) $(STAGING_DIR)/var/state/esos/no_login_tui; \
 	fi
 	$(QUIET) if [ "$(enable_auto_dhcp)" = "yes" ]; then \
 	  $(TOUCH) $(STAGING_DIR)/var/state/esos/auto_dhcp; \
 	fi
-	$(SED) -i 's/ssl_dh_key_size/$(ssl_dh_key_size)/' \
-	$(STAGING_DIR)/etc/rc.d/rc.rpcagent
 	$(CHOWN) 101:101 $(STAGING_DIR)/var/lib/corosync
 	$(CHOWN) -R 101:101 $(STAGING_DIR)/var/lib/pacemaker
 	$(CHOWN) -R 101:101 $(STAGING_DIR)/var/lib/heartbeat
@@ -4272,7 +5520,6 @@ image:
 	$(CHOWN) 65534:65534 $(STAGING_DIR)/var/run/stunnel
 	$(CHOWN) 0:65534 $(STAGING_DIR)/var/lib/stunnel
 	$(CHMOD) 1770 $(STAGING_DIR)/var/lib/stunnel
-	$(CHOWN) 104:104 $(STAGING_DIR)/var/run/web_ui
 	$(LN) rc.0 $(STAGING_DIR)/etc/rc.d/rc.6
 	$(LN) rc.2 $(STAGING_DIR)/etc/rc.d/rc.5
 	$(LN) rc.2 $(STAGING_DIR)/etc/rc.d/rc.4
@@ -4295,32 +5542,32 @@ image:
 	  $(FIND) $(STAGING_DIR)/{,usr/}{lib,bin,sbin} -type f \
 	  -executable -exec $(STRIP) --strip-debug '{}' ';'; \
 	fi
-	$(QUIET) if [ "$(with_customize_dir)" = "yes" ]; then \
+	$(QUIET) set -e; if [ "$(with_customize_dir)" = "yes" ]; then \
 	  if [ -x "$(customize_dir)/inject.sh" ]; then \
 	    $(customize_dir)/inject.sh $(STAGING_DIR); \
 	  fi; \
 	fi
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### Creating the root archive file..."
-	cd $(STAGING_DIR) && \
-	$(FIND) . -depth | $(CPIO) -ov --format=newc | $(BZIP2) -c > \
-	$(MOUNT_DIR)/PRIMARY-root.cpio.bz2
+	$(MKSQUASHFS) $(STAGING_DIR) $(MOUNT_DIR)/PRIMARY-root.sqsh -comp xz
 	$(CHOWN) -R root:root $(MOUNT_DIR)/boot/*
 	$(UMOUNT) $(MOUNT_DIR)/boot
+	$(RMDIR) $(MOUNT_DIR)/boot
 	$(UMOUNT) $(MOUNT_DIR)
 	$(KPARTX) -d $(loop_dev)
 	$(LOSETUP) -d $(loop_dev)
-	$(LN) $(img_file) $(stable_img_file)
 	$(QUIET) $(ECHO) && $(ECHO)
-	$(QUIET) $(ECHO) "### Compressing image file..."
-	$(BZIP2) -z -9 -c $(img_file) > $(bz2_img_file)
-	cd $(dir $(bz2_img_file)) && $(MD5SUM) -b \
-	$(notdir $(bz2_img_file)) > $(BUILD_DIR)/dist_md5sum.txt
-	cd $(dir $(bz2_img_file)) && $(SHA256SUM) -b \
-	$(notdir $(bz2_img_file)) > $(BUILD_DIR)/dist_sha256sum.txt
+	$(QUIET) $(ECHO) "### Archiving/compressing (sparse) image file..."
+	$(TAR) cfj $(tar_bz2_img_file) -C $(dir $(tar_bz2_img_file)) \
+	$(notdir $(img_file)) --sparse
+	cd $(dir $(tar_bz2_img_file)) && $(MD5SUM) -b \
+	$(notdir $(tar_bz2_img_file)) > $(BUILD_DIR)/dist_md5sum.txt
+	cd $(dir $(tar_bz2_img_file)) && $(SHA256SUM) -b \
+	$(notdir $(tar_bz2_img_file)) > $(BUILD_DIR)/dist_sha256sum.txt
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### Clearing the staging directory..."
-	$(RM) $(STAGING_DIR)/*
+	$(RM) $(STAGING_DIR)
+	$(MKDIR) $(STAGING_DIR)
 	$(QUIET) $(ECHO) && $(ECHO)
 	$(QUIET) $(ECHO) "### All done; your ESOS disk image file is ready!"
 
@@ -4328,22 +5575,22 @@ image:
 # pkg_dist - Create the ESOS package distribution file (tarball).
 .PHONY: pkg_dist
 pkg_dist: pkg_prefix = $(pkg_name)-$(esos_ver)
-pkg_dist: license_file =  $(if $(findstring yes,$(enable_commercial)),\
-	COMMERCIAL_EULA,COPYING)
-pkg_dist: $(bz2_img_file)
+pkg_dist: $(tar_bz2_img_file)
 	$(call no_chroot)
+	$(ECHO) "$(product) $(esos_ver)" > $(BUILD_DIR)/VERSION
 	$(RM) $(BUILD_DIR)/ChangeLog-*.txt
-	$(RM) $(BUILD_DIR)/esos_*.zip
+	$(RM) $(BUILD_DIR)/$(pkg_name)-*.zip
 	$(LN) $(SRC_DIR)/ChangeLog $(BUILD_DIR)/ChangeLog-$(esos_ver).txt
 	$(LN) $(BUILD_DIR) $(pkg_prefix)
-	$(ZIP) -9 $(pkg_prefix).zip $(pkg_prefix)/$(notdir $(bz2_img_file)) \
+	$(ZIP) -9 $(pkg_prefix).zip \
+	$(pkg_prefix)/$(notdir $(tar_bz2_img_file)) \
 	$(pkg_prefix)/dist_*.txt
 	$(RM) $(pkg_prefix)
 	$(LN) $(SRC_DIR) $(pkg_prefix)
 	$(ZIP) -9 -g $(pkg_prefix).zip $(pkg_prefix)/ChangeLog \
 	$(pkg_prefix)/install.sh $(pkg_prefix)/install.vbs \
-	$(pkg_prefix)/INSTALL $(pkg_prefix)/README \
-	$(pkg_prefix)/$(strip $(license_file))
+	$(pkg_prefix)/INSTALL $(pkg_prefix)/README $(pkg_prefix)/COPYING \
+	$(pkg_prefix)/VERSION
 	$(RM) $(pkg_prefix)
 	$(LN) $(wildcard $(SOURCES_DIR)/win_binaries-*) $(pkg_prefix)
 	$(ZIP) -9 -g -r $(pkg_prefix).zip $(pkg_prefix)/*
@@ -4352,11 +5599,4 @@ pkg_dist: $(bz2_img_file)
 	$(ZIP) -9 -g -r $(pkg_prefix).zip $(pkg_prefix)/vmlinux*.xz
 	$(ZIP) -9 -g -r $(pkg_prefix).zip $(pkg_prefix)/System.map*.xz
 	$(RM) $(pkg_prefix)
-
-# Handle additional targets via customization directory
-ifeq ($(in_chroot),no)
-  ifeq ($(with_customize_dir),yes)
-    include $(customize_dir)/extra-support.mk
-  endif
-endif
 

@@ -5,6 +5,10 @@ source /etc/rc.d/common
 SBD_CONFIG="/etc/sysconfig/sbd"
 SBD="/usr/sbin/sbd"
 SBD_LOCK="/var/lock/sbd"
+SBD_STARTS_DIR="/etc/esos_sbd/starts"
+SBD_STARTS_SEC="1800"
+SBD_MAX_STARTS="3"
+RC_SBD_LOGGER="/usr/bin/logger -t rc.sbd -p daemon.info"
 
 check_args ${@}
 
@@ -21,6 +25,30 @@ set +a
 
 start() {
     /bin/echo "Starting sbd..."
+    /bin/mkdir -p "${SBD_STARTS_DIR}"
+    /bin/touch "${SBD_STARTS_DIR}/$(/bin/date +%s)"
+    /usr/local/sbin/conf_sync.sh
+    curr_time="$(/bin/date +%s)"
+    time_thresh="$(("${curr_time}" - "${SBD_STARTS_SEC}"))"
+    start_cnt="0"
+    while read -r start_file; do
+        start_time="$(/usr/bin/basename "${start_file}")"
+        if [ "${start_time}" -gt "${time_thresh}" ]; then
+            start_cnt="$(("${start_cnt}" + "1"))"
+        fi
+    done <<< "$(/usr/bin/find "${SBD_STARTS_DIR}" -type f)"
+    if [ "${start_cnt}" -gt "${SBD_MAX_STARTS}" ]; then
+        ${RC_SBD_LOGGER} "More than ${SBD_MAX_STARTS} SBD starts in the" \
+            "last ${SBD_STARTS_SEC} seconds have been detected!"
+        ${RC_SBD_LOGGER} "Configuration file 'SBD_STARTMODE'" \
+            "value: ${SBD_STARTMODE}"
+    else
+        if [ "x${SBD_STARTMODE}" = "xclean" ]; then
+            ${RC_SBD_LOGGER} "SBD start threshold has not been exceeded;" \
+                "overriding 'SBD_STARTMODE' value of 'clean' to 'always'."
+            export SBD_STARTMODE="always"
+        fi
+    fi
     /bin/sh -c "/usr/bin/nohup ${SBD} ${SBD_OPTS} \
         -p /var/run/sbd.pid watch > /dev/null 2>&1 &"
     /bin/touch ${SBD_LOCK}
@@ -29,12 +57,12 @@ start() {
 
 stop() {
     /bin/echo "Stopping sbd..."
-    /bin/kill -TERM $(/bin/pidof ${SBD}) || exit 1
+    /usr/bin/kill -TERM $(/usr/bin/pidof ${SBD}) || exit 1
     wait_for_stop ${SBD} && /bin/rm -f ${SBD_LOCK}
 }
 
 status() {
-    /bin/pidof ${SBD} > /dev/null 2>&1
+    /usr/bin/pidof ${SBD} > /dev/null 2>&1
     exit ${?}
 }
 

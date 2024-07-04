@@ -8,9 +8,25 @@
 CONF_MNT="/mnt/conf"
 USB_RSYNC="${CONF_MNT}/rsync_dirs"
 ETCKEEPER_REPO="${CONF_MNT}/etckeeper.git"
-RSYNC_DIRS="/var/lib /opt /root/.ssh" # Absolute paths (leading '/' required)
+# Absolute paths (leading '/' required)
+RSYNC_DIRS="/var/lib /opt /root/.ssh /root/.bash_history"
 INITIAL_SYNC=0
 ROOT_PATH="/"
+
+# Make sure we always unmount (or try to)
+function unmount_fs {
+    umount ${CONF_MNT} || exit 1
+}
+if ! grep -q esos_persist /proc/cmdline; then
+    trap unmount_fs EXIT
+fi
+
+function initial_rsync {
+    # Use rsync for the other directories/files
+    mkdir -p ${USB_RSYNC} || exit 1
+    rsync --archive --update --exclude "System Volume Information" \
+        --exclude "lost+found" ${USB_RSYNC}/ ${ROOT_PATH} || exit 1
+}
 
 # Read the options and extract
 TEMP=$(getopt -o i --long initial -n 'usb_sync.sh' -- "$@")
@@ -24,7 +40,14 @@ while true ; do
 done
 
 # Mount, sync, and unmount
-mount ${CONF_MNT} || exit 1
+if cat /proc/mounts | awk '{print $2}' | grep -q ${CONF_MNT}; then
+    if ! grep -q esos_persist /proc/cmdline; then
+        logger -s -t $(basename ${0}) -p "local4.warn" \
+            "It appears '${CONF_MNT}' is already mounted! Continuing anyway..."
+    fi
+else
+    mount ${CONF_MNT} || exit 1
+fi
 if [ ${INITIAL_SYNC} -eq 1 ]; then
     if git ls-remote ${ETCKEEPER_REPO} > /dev/null 2>&1; then
         # The Git repo exists, pull it down locally
@@ -34,13 +57,15 @@ if [ ${INITIAL_SYNC} -eq 1 ]; then
         cd /etc && git checkout -q -f -b master --track origin/master || exit 1
         cd /etc && git reset -q --hard origin/master || exit 1
         etckeeper init > /dev/null || exit 1
+        # Populate the other directories/files
+        initial_rsync
     else
         # Migrate any old configuration directories
         if [ -d "${CONF_MNT}/etc" ]; then
             echo "Sync'ing previous /etc configuration locally..."
             rsync --archive --exclude etc/esos-release \
                 ${CONF_MNT}/etc ${ROOT_PATH} || exit 1
-            rm -rf ${CONF_MNT}/etc || exit 1
+            rm -rf ${CONF_MNT:?}/etc || exit 1
         fi
         if [ -d "${CONF_MNT}/var" ]; then
             echo "Moving USB /var directory to new location..."
@@ -52,21 +77,19 @@ if [ ${INITIAL_SYNC} -eq 1 ]; then
             mkdir -p ${USB_RSYNC} || exit 1
             mv ${CONF_MNT}/opt ${USB_RSYNC}/ || exit 1
         fi
+        # Pull down other directories first as special overrides might exist
+        initial_rsync
         # Initialize and configure the new Git repo
         git init -q --bare ${ETCKEEPER_REPO} || exit 1
-	echo -en "# Specific to ESOS\n/rc.d/\n/esos-release\n/issue\n\n" > \
+        echo -en "# Specific to ESOS\n/rc.d/\n/esos-release\n/issue\n\n" > \
             /etc/.gitignore || exit 1
-        etckeeper init > /dev/null || exit 1
         git config --system user.name "ESOS Superuser" || exit 1
-	git config --system user.email "root@esos" || exit 1
+        git config --system user.email "root@esos" || exit 1
+        etckeeper init > /dev/null || exit 1
         cd /etc && git commit -q -m "initial check-in via usb_sync.sh" || exit 1
         cd /etc && git remote add origin ${ETCKEEPER_REPO} || exit 1
-	cd /etc && git push -q origin master || exit 1
+        cd /etc && git push -q origin master || exit 1
     fi
-    # Use rsync for the other directories/files
-    mkdir -p ${USB_RSYNC} || exit 1
-    rsync --archive --update --exclude "System Volume Information" \
-        --exclude "lost+found" ${USB_RSYNC}/ ${ROOT_PATH} || exit 1
 else
     # During an upgrade, the user may wipe esos_conf, so recreate if needed
     if ! git ls-remote ${ETCKEEPER_REPO} > /dev/null 2>&1; then
@@ -77,7 +100,7 @@ else
     fi
     # Push changes up to the USB Git repo / file system
     cd /etc && git push -q origin master || exit 1
-    rsync --archive --relative --delete ${RSYNC_DIRS} ${USB_RSYNC} || exit 1
+    rsync-no-vanished --archive --relative --delete \
+        ${RSYNC_DIRS} ${USB_RSYNC} || exit 1
 fi
-umount ${CONF_MNT} || exit 1
 

@@ -6,9 +6,6 @@ source /etc/rc.d/common
 /sbin/ifconfig lo 127.0.0.1
 /sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
 
-# Set a temporary host name
-/bin/hostname localhost
-
 # Start the EARLY user settable services
 for i in ${EARLY_SERVICES}; do
     if check_enabled "${i}"; then
@@ -27,8 +24,15 @@ fi
 /bin/echo "Loading the Mellanox ConnectX-4 and Connect-IB core driver..."
 /sbin/modprobe mlx5_core
 
+/bin/echo "Loading the QLogic FastLinQ 4xxxx Ethernet driver..."
+/sbin/modprobe qede
+
+/bin/echo "Loading the Broadcom NetXtreme Ethernet driver..."
+/sbin/modprobe bnxt_en
+
 /bin/echo "Loading the Microsemi Switchtec NTB driver..."
 /sbin/modprobe ntb_hw_switchtec
+/sbin/modprobe cls_switchtec
 
 /bin/echo "Loading the Virtual Ethernet over NTB Transport driver..."
 /sbin/modprobe -s ntb_netdev
@@ -40,8 +44,12 @@ if [ -x /etc/rc.d/rc.network ]; then
     /etc/rc.d/rc.network start
 fi
 
-echo "Starting system log daemon (syslogd)...."
-/usr/sbin/syslogd
+if [ -x /etc/rc.d/rc.syslogd ]; then
+    if /usr/bin/pidof /usr/sbin/syslogd > /dev/null; then
+        /etc/rc.d/rc.syslogd stop
+    fi
+    /etc/rc.d/rc.syslogd start
+fi
 
 /bin/echo "Starting vixie-cron..."
 /usr/sbin/cron
@@ -81,11 +89,25 @@ for i in $(/bin/ls /opt/sbin); do
     fi
 done
 
+/bin/echo "Loading the bcache module..."
+/sbin/modprobe bcache
+
 if [ -f "/lib/modules/$(/bin/uname -r)/extra/zfs/zfs.ko" ]; then
     /bin/echo "Loading the ZFS module..."
     /sbin/modprobe zfs
     /bin/echo "Starting the ZFS Event Daemon..."
     /usr/sbin/zed -p /var/run/zed.pid
+fi
+
+/bin/echo "Loading the NVMeoF target modules..."
+/sbin/modprobe nvmet-rdma
+/sbin/modprobe nvmet-fc
+/sbin/modprobe nvmet-tcp
+/bin/echo 5 > /sys/module/nvme_core/parameters/admin_timeout
+
+if [ -f "/lib/modules/$(/bin/uname -r)/extra/nvme_qla2xxx.ko" ]; then
+    /bin/echo "Loading the QLogic NVMe Target module..."
+    /sbin/modprobe nvme_qla2xxx
 fi
 
 # Start the LATE user settable services

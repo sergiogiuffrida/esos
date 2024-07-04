@@ -1,6 +1,2209 @@
+2024-06-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'hung_task_timeout'
+
+	decreased hung task timeout to 60s
+
+2024-06-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'smartmontools_update'
+
+	updated the smartmontools package to version 7.4
+
+2024-03-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20240320_tweaks'
+
+	rc.2: moved setting temp/initial hostname to rc.sysinit, handle restarting syslogd so we get earlier messages and if remote logging is configured; rc.sysinit: start syslogd early and set a temporary hostname so early log messages don't show "none"
+
+2024-01-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'fcoemon_fix_2'
+
+	rc.lldpad: in stop() if fcoemon is running, kill that first before stopping lldpad (otherwise fcoemon complains loudly via logging)
+
+2024-01-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20240110_tweaks'
+
+	applied several tweaks/enhancements to 'archive_logs.sh'
+
+2023-12-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'fcoemon_dep'
+
+	updated rc.scst and ocf:esos:scst scripts to make starting/stopping 'fcoemon' dependent on lldpad running (otherwise we get annoying messages in the logs since it's truly dependent on this)
+
+2023-12-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_fw_rev'
+
+	use the ESOS version string in core.c as well
+
+2023-12-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_23.10'
+
+	fixed up for new MOFED version
+
+2023-11-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ra_rescan_fix'
+
+	updated RA scripts to use the new argument name with the rescan-scsi-bus.sh script (--timeout) provided by the new sg3_utils version (our one-off patch is no longer needed)
+
+	Merge branch 'sg3_utils_bump'
+
+	bump'd sg3_utils to version 1.48
+
+2023-11-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'contrib_ra_tweaks'
+
+	tweaked the 'ocf:heartbeat:VirtualDomain' and 'stonith:external/sbd' RA scripts for better handling
+
+2023-11-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_nvmet_tweaks'
+
+	when using the MOFED package, in the NVMe target driver, set the 'fr' attribute to contain the ESOS version string, and increase the 'anatt' attribute to 60 seconds
+
+2023-11-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rem_usage_stuff'
+
+	removed all "ESOS usage" collection stuff (from TUI code, and disable build option)
+
+2023-11-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nvmet_ra_tweak'
+
+	handle retrying of DM removal in ocf:esos:nvmet (during a stop action)
+
+2023-10-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'pam_su_fixup_master'
+
+	fixed pam.d files for su + su-l (wasn't allow root w/o password)
+
+2023-10-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_cmd2'
+
+	included some changes/enhancememnts for the Cmd2 Python module
+
+	Merge branch 'master_su_fixup'
+
+	disabled Busybox 'su' and included the real program from the util-linux package; added additional pam.d files for su
+
+2023-10-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20231017_changes'
+
+	added a kernel patch that sets dm-zero block devices to a 4096-byte logical + phsyical sector size; updates/improvements for the 'ocf:esos:nvmet' and 'ocf:esos:ana' RA scripts
+
+2023-10-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_ana_tweaks'
+
+	more tweaks in the 'ocf:esos:ana' RA script; fixed an issue for 'ocf:esos:Raid1' introduced by our resource-agents patched (no harm, but there was an extra error message)
+
+2023-10-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nvmeof_ra_fixes'
+
+	fixed a few issues in new NVMeoF RA scripts
+
+2023-10-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nvmeof_ra'
+
+	sysctl.conf: set a default packet scheduling algorithm; enabled CONFIG_NET_SCH_NETEM in kernel config; added new RA scripts for NVMe target stuff (NVMeoF); fixed a few wording/formatting things in current RA scripts
+
+2023-08-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'atto_fix'
+
+	no longer need to delete the .detect lines for latest driver version
+
+2023-08-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20230820_mas'
+
+	updated QLogic FW package; build fix for OCS SDK driver
+
+2023-05-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nvmetcli_update'
+
+	updated nvmetcli to latest revision from master branch
+
+2023-05-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nvme_qla2xxx_fixup'
+
+	fixup the esos_kernels.chroot target to handle building qla2xxx_scst against MOFED (when used) properly; added several fixes for Python scripts included with the qla2xxx_scst driver
+
+2023-05-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'gearshot-gearshot_add_py-spy'
+
+	Merge branch 'gearshot_add_py-spy' of https://github.com/gearshot/esos into gearshot-gearshot_add_py-spy
+
+	Merge branch 'nvme_qla2xxx'
+
+	updated qlogic_fw package; implemented qla2xxx_scst.chroot target for scripts included with driver package; modprobe.conf: set ql2xnvmeenable=2 for NVMeoF support; rc.2: load the 'nvme_qla2xxx' module on boot
+
+2023-05-11  Chris Graves  <chris.graves@quantum.com>
+
+	Adding py-spy profiler and updating python websockets to 11.0.3.
+
+2023-04-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'gearshot-gearshot-python_pkg_ver_updates'
+
+2023-04-24  Chris Graves  <chris.graves@quantum.com>
+
+	Updating a few python3 packages to avoid unwanted pip downloading of the most recent version during the build.
+
+2023-04-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sasutils_fix'
+
+	use specific pip3 version in Python.chroot; serialization installation of sasutils.chroot so it doesn't clobber easy-install.pth with other parallel targets
+
+2023-03-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'pwatcher_timing'
+
+	pwatcher.sh: added some sleep lines to handle odd watched daemon issues
+
+2023-03-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_lvm2_fix'
+
+	rc.lvm2: comment out 'dmsetup mknodes' line in start() function since it causes issues with udev symlinks on boot
+
+2023-03-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'md_raid_fix'
+
+	include this patch which is supposed to resolve hangs related to setting the 'sync_action' value in sysfs for MD RAID arrays: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/patch/?id=9dfbdafda3b34e262e43e786077bab8e476a89d1
+
+2023-03-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'libqb_upgrade'
+
+	updated libqb to 2.0.6 and corosync to 2.4.6; include websockets==10.4 with Python; fstab: don't size size restrictions for /dev and /dev/shm (follows suit of other distros); fixed a couple bugs in the 'ocf:esos:alua' RA
+
+2023-03-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'alua_ra_speedup'
+
+	rc.d/common: in wait_for_stop() and wait_for_pid_stop() take an optional second argument for overriding the default stop timeout value, in wait_for_stop() use 'pidof -x' so we can properly get PIDs of scripts (eg, via python); pwatcher.sh: in stop() try TERM first, ABRT second, and KILL last with short stop-timeouts in between (handles misbehaving processes better); alua RA: improvements in operation duration (shorter), lots of code cleanup with help from 'shellcheck' recommendations
+
+2023-03-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'pwatcher_fixup'
+
+	rc.libvirtdexporter: updates for the new pwatcher.sh arguments / handling; pwatcher.sh: handling touching the lock file instead of in rc script, and support an additional (optional) status test that can be done after checking for the PID
+
+2023-02-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_async-lru'
+
+	added the async-lru and aiofile packages for the Python.chroot recipe (via the pip3 installer, along with a couple deps)
+
+2023-02-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	iso_installer.sh: handle non-zero exit statuses from critical functions by dropping into a bash shell
+
+2023-02-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_dmesg'
+
+	include the real 'dmesg' tool from the util-linux package (we left the Busybox command enabled so we have it in initramfs in case it's needed for debugging; during init, Busybox should not make a link since the real binary already exists)
+
+2023-02-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_5.8'
+
+	updates for MOFED 5.8; etc/rc.d/common: added the wait_for_pid_stop() helper function; rc.libvirtdexporter: use quiet grep and the new wait_for_pid_stop() function after sending SIGTERM
+
+2023-02-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_lvm2_stop'
+
+	rc.lvm2: in stop() actually stop (deactivate) any VG's; rc.nvmet: don't write out the JSON config file when stopping (this should be saved separately as how we do with SCST so we don't ever save a "bad" file); fixed bug in ocf:esos:alua when setting the peer TPG state via SSH fails
+
+2023-01-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'pwatcher'
+
+	added a 'pwatcher' helper script to handle restarting processes; rc.libvirtdexporter: use pwatcher since libvirtdexporter dies randomly
+
+	Merge branch 'rc_network_br_vlan'
+
+	rc.network: applied several enhancements to handle VLAN's with bridge interfaces properly
+
+2023-01-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'scst_n_kern_bump'
+
+	updated Linux to latest 5.4 patch release (5.4.229); updated SCST to latest commit from 3.7.x release branch
+
+	Merge branch 'nvme_tcp'
+
+	enabled additional NVMe drivers in the kernel config (including TCP host/target support); rc.2: load the nvmet-tcp module on boot; fixed tar.bz2 removal in 'clean' target
+
+	Merge branch 'single_user'
+
+	fixed incorrect (broken) cleanup steps in the 'image' target; handle the 'single_user' kernel parameter in rc.sysinit
+
+2023-01-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_sas_utils'
+
+	added the smp_utils and sasutils packages
+
+2022-12-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'wmohanlon-add_aiohttp'
+
+2022-12-30  Bill O'Hanlon  <bill.ohanlon@gmail.com>
+
+	Add aiohttp and related modules to Python lib.
+
+2022-12-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_network_ethtool'
+
+	rc.network: process ethtool options (if any) for bridge (and member) interfaces, and for bond (and slave) interfaces
+
+2022-12-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'inc_ring_buf'
+
+	increased kernel ring buffer (accessed via 'dmesg') size to 4 MiB (CONFIG_LOG_BUF_SHIFT=22)
+
+2022-12-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'scst_update'
+
+	updated SCST to 3.7.x; build SCST with '2release' (instead of '2perf') for production kernel so we get tracing capability (authors claim very little performance impact); updated the SCST patch so we also get the initiator name when an SCST vdisk_* device receives an IO with the "filename" FD closed
+
+2022-12-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_minicom'
+
+	added the 'minicom' package (for serial terminal)
+
+2022-11-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'r8152_tweak'
+
+	don't use CONFIG_CTAP_SHORT_OFF with r8152 out-of-tree driver build (use RTL8152_DEBUG instead)
+
+2022-11-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_lz4'
+
+	added the lz4 library
+
+2022-11-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'r8152_driver'
+
+2022-11-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the '--with-r8152=' build time option so we can use an out-of-tree r8152 kernel driver (Realtek USB Ethernet)
+
+2022-10-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_udev_tweak'
+
+	mlnx_ofed.chroot: comment out unused/unwanted use of "mlnx_interface_mgr.sh" in the 90-ib.rules udev rule file
+
+2022-10-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_bwm-ng'
+
+	added the 'bwm-ng' package (network interface bandwidth monitoring tool)
+
+2022-10-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'cmd2_enhancement'
+
+	include a 'timestamp' attribute in the Cmd2 history log
+
+2022-10-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_memcached'
+
+	added the 'memcached' build option ('--enable-memcached') which builds/includes the daemon (from PR # 288 on GH, thank you Chris Graves); fixed issue with patch applied at end of Python.chroot when attempting to rebuild without deleting work/chroot/ directory
+
+	Merge branch 'top_look_fix'
+
+	use '--disable-modern-top' with procps.chroot so we get the old-school top interface by default
+
+2022-10-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'braccuglia1-master'
+
+2022-10-05  braccuglia  <brian.raccuglia@quantum.com>
+
+	Added change to rc.serial to update ttyS port entries in /etc/inittab using baud rate 115200
+
+2022-09-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'linux_5.4_update'
+
+2022-09-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated Linux to version 5.4.212
+
+2022-08-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'wmohanlon-pydlm-hang'
+
+	Merge branch 'pydlm-hang' of https://github.com/wmohanlon/esos into wmohanlon-pydlm-hang
+
+2022-08-09  Bill O'Hanlon  <bill.ohanlon@gmail.com>
+
+	Fixes hang in pydlm.lock when /proc/misc has lines with the driver name missing.
+
+2022-08-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'wmohanlon-switchtec-status-crash'
+
+2022-08-01  Bill O'Hanlon  <bill.ohanlon@gmail.com>
+
+	Fixes buffer overrun in "switchtec status /dev/switchtecX" command.
+
+2022-07-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220727_tweaks'
+
+	archive_logs.sh: some daemons don't handle their log file being moved out from under them, so for those use truncate/copy instead of moving when creating the archive
+
+	rc.sbd: increased start-threshold to 1800 seconds (30 minutes) so if we have more than 3 starts in 30 minutes, and we're fenced, then stay fenced -- this handles some odd dual-controller boot scenarios where the previous threshold did not stop endless fencing loops
+
+2022-07-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'msevy-quantum-sevy-new-dmidecode'
+
+	Merge branch 'sevy-new-dmidecode' of https://github.com/msevy-quantum/esos into msevy-quantum-sevy-new-dmidecode
+
+2022-07-11  Michael Sevy  <michael.sevy@quantum.com>
+
+	Add support for dmidecode v3.4
+
+2022-07-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ocs_sg_inc'
+
+	set scst_sg_table_size=4096 for 'ocs_fc_scst' so we can accomodate large i/o transfer sizes
+
+2022-05-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_no_bbl'
+
+	MD RAID's BBL (bad block list) feature can be problematic in just about all cases... disable it globally for all mdadm operations
+
+2022-05-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'dm-bufio_wa'
+
+	introduce a kernel patch to work-around a buffer corruption issue that occurs with dm-cache (see https://listman.redhat.com/archives/dm-devel/2022-May/050776.html for more details) -- this is only a temporary WA and a real fix coming in the future
+
+	Merge branch 'real_od'
+
+	use the real version of 'od' from the coreutils package
+
+2022-05-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_partx'
+
+	include the 'partx' tool from util-linux.chroot (udev rule complains about missing this)
+
+2022-04-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'scst_patch_fix'
+
+	fixed SCST patch for iSCSI abort handling (missing brackets)
+
+2022-04-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220426_tweaks'
+
+	mlnx-tools: added a patch set that fixes Python 3.9 compatability; Makefile.in: several udev rules use 'systemd-run' so fix that
+
+	Merge branch '5.4.x_update'
+
+	updated Linux to version 5.4.190
+
+2022-04-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'alua_ra_rescan'
+
+	updated 'ocf:esos:alua' RA to also rescan the iSCSI bus when setting the redirection device
+
+2022-03-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'openssl_bump'
+
+	updated OpenSSL to version 1.1.1n
+
+2022-03-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bobafetthotmail-patch-1'
+
+	Merge branch 'patch-1' of git://github.com/bobafetthotmail/esos into bobafetthotmail-patch-1
+
+	Merge branch 'install_model_egrep'
+
+	install.sh: if "install_model" is specified pass it to 'grep -E' so we can match multiple model strings (eg, "TOSHIBA|Micron|SONY")
+
+	Merge branch 'rc.0_check_state'
+
+	rc.0: when stopping LATE_SERVICES and EARLY_SERVICES check that they return a status of either RUNNING or UNKNOWN before attempting
+
+2022-03-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_switchtec-user'
+
+	added the switchtec-user package (provides the 'switchtec' CLI tool)
+
+2022-02-25  Alberto Bursi  <alberto.bursi@outlook.it>
+
+	no RAM size check with esos_persist option
+	Disable the RAM size check if esos_persist kernel commandline option is used.
+	Enforcing this ram amount is relevant only if ESOS needs to run from RAM.
+	If ESOS is run with esos_persist kernel parameter, it is not doing that.
+	With this change, people that want to use ESOS with less than 3GB of RAM
+	only need to edit the grub config in their boot partition to add esos_persist
+	and they are set, no need to recompile/rebuild initramfs.
+
+2022-02-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'cheroot_fix'
+
+	added a patch for the 'cheroot' module in Python to prevent an excessive logging / hang condition from SSL errors
+
+2022-02-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sbd_auto_unfence'
+
+	rc.sbd: increase SBD_STARTS_SEC to 1200 seconds (handles slower-booting controllers)
+
+2022-02-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220211_tweaks'
+
+	added the cpuset package; updated cls_switchtec driver to latest version; use CONFIG_PREEMPT_VOLUNTARY instead of CONFIG_PREEMPT_NONE in kernel config
+
+2022-02-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220210_tweaks'
+
+	rc.d/common: added the get_logical_cpus() helper function for parsing physical to logical cores; rc.d/rc.corosync: support logger when needed; updated Linux config for NO_HZ_FULL
+
+2022-02-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'irqbalance_update'
+
+	updated irqbalance to version 1.8.0 (including a patch that fixes irqbalance-ui seg fault); enabled additional 'nc' applet features in Busybox
+
+	Merge branch 'alua_ra_fence'
+
+	updated the 'alua' RA to handle the special case of a pre-demote notify if there is a pending fence event, and attempt to ping the peer node before running any ssh commands to set TPG state on peer
+
+2022-02-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220201_tweaks'
+
+	updated qla2xxx module options to increase target exchange count for target-mode; updated Busybox config to disable the ifup/ifdown applets (we don't use RHEL-style network config files, so these don't really work for us); applied SCST patch to ack aborts even if they are outside of the 2048 window (and print a warning message when this occurs) -- resolves VMware ESXi iSER oddity w/ aborts
+
+2022-01-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_zip'
+
+	added the 'zip' utility (and friends) to allow zip'ing stuff
+
+2022-01-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'prometheus_update'
+
+	updated the 'prometheus' and 'node_exporter' packages to the latest versions (bloated binaries are packed via upx)
+
+2022-01-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20220109_mas'
+
+	Python.chroot: include the 'xmltodict' module, install.sh: don't utilize the SECONDARY image slot if the root FS won't hold both images
+
+2021-12-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'udhcpc_syslog'
+
+	use the '-S' option with udhcpc so it logs to syslog as well
+
+2021-12-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_network_tweak'
+
+	rc.network: handle setting the bridge member and bond slave interface MTU to match the parent
+
+2021-12-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rsync-no-vanished'
+
+	install the rsync-no-vanished script from support/ in rsync source; updated usb_sync.sh to use rsync-no-vanished instead of rsync when sync'ing under normal conditions (not initial) -- this should prevent transient failures when temporary files exist in rsync USB locations (eg, work-around "rsync warning: some files vanished before they could be transferred (code 24)")
+
+2021-12-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211203_mas'
+
+	patched dlm to spitout active lockspaces on shutdown (when active lockspaces exist); in bio_dev_to_redirect() of ocf:esos:alua we need an additional call to iscsi_sess_rescan() when attempting to set the redirection device
+
+2021-11-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211130_tweaks'
+
+	increase rc script stop timeout to 10 minutes
+
+2021-11-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211129_tweaks'
+
+	include stderr when writing the iso_installer log file
+
+2021-11-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211121_tweaks'
+
+	added the '--online-wait=' optional argument to the rescan-scsi-bus.sh script (to control how long we wait for devices to be marked for removal); install.sh: updates to handle in-place upgrades for /dev/vdX install devices; ocf:esos:alua RA: changed behavior of set-ALUA-transitioning-state to use SSH by default (using node names with public key auth), use the '--online-wait=' argument with the rescan-scsi-bus.sh call, increased RESCAN_SCSI_TIMEOUT to 20s
+
+2021-11-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_fixup'
+
+	install.sh: handle using /dev/vdX block devices for upgrades, echo error messages to stderr
+
+2021-11-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'nix_lvmetad'
+
+	lvmetad and clvmd are deprecated in latest LVM2 version, removed references from rc.lvm2 and rc.conf, removed rc.clvmd; updated default /etc/lvm/ config files
+
+2021-11-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_mlnx-tools'
+
+	removed our own tc_wrap.py script and added the mlnx-tools package
+
+2021-11-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211106_tweaks'
+
+	okay, we don't need 'lvmconf' any more; updated nvme-cli to latest version
+
+2021-11-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	lvmconf: fixed for cluster enable/disable
+
+	include the missing 'lvmconf' tool (no longer present in latest LVM2 package)
+
+	MOFED: zap the dummy qla2xxx.ko module
+
+2021-11-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lvm2_update'
+
+	updated multipath-tools to version 0.8.7 (bug fixes); handle detecting chroot mounts that are already mounted (in pre_chroot) so we don't get burried mounts
+
+	libboost_iostreams is needed for the new version of thin-provisioning-tools
+
+2021-11-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated lvm2 to version 2.03.14 and thin-provisioning-tools to version 0.9.0
+
+2021-10-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated kernel param option to parse as 'imageserver'
+
+2021-10-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	openib.conf: always load mlx5_ib; iso_installer.sh: handle 'image_server' kernel param, applied several shellcheck recommendations
+
+2021-10-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_5.4'
+
+	fix MOFED build for 'srpt' in SCST; specify WARNINGS var for elxsdkutil (ocs_sdk.chroot)
+
+2021-10-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated support for Mellanox OFED 5.4; updated SCST to version 3.5.x
+
+2021-10-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	enabled the CONFIG_PCI_STUB and CONFIG_PCI_PF_STUB options as modules
+
+2021-10-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	usb_sync.sh: during initial sync on new systems, set the Git name/email BEFORE running 'etckeeper init', swap tabs for spaces
+
+2021-10-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'new_qla_fw'
+
+	updated QLogic firmware to the latest version
+
+2021-10-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'celer_clean_fix'
+
+	fixed build issue for the Celerity FC driver
+
+	Merge branch 'rc_network_sort'
+
+	rc.network: updated to accept the "None" bootproto value which does not configure an IP address (no DHCP, no Static) and only sets the MTU of an interface, sort network.conf interface sections alphabetically so bondX's are configured before brX's
+
+2021-10-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20211008_tweaks'
+
+	applied several Makefile fixes/tweaks for kernel driver builds; updated sysctl.conf for virtual memory settings
+
+2021-10-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'virbr_fix'
+
+	rc.network: use '^' in front of each interface name regex match so we match starting from the beginning of the string (eg, so we don't match 'virbr0')
+
+2021-09-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_cacerts'
+
+	added the 'cacerts' package (SSL root CA certificates)
+
+2021-09-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_wget'
+
+	added the real 'wget' program and disabled the Busybox variant
+
+2021-09-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210924_changes'
+
+	updated bash to version 5.1.8 (fixes leaked FD issue when .bash_history is empty); use 'set -e' when calling inject.sh so we exit on any errors; set nvme_core 'admin_timeout' to 5s in rc.2
+
+2021-09-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	fixed issue in esos2iso script (new archived/compressed image name)
+
+	Merge branch 'bigger_esos_root'
+
+	for the compressed image archive used by the upgrade process, use a .tar.bz2 instead of just .bz2 so we can keep the sparse image file sparse; increased the base image size from 4 GB to 8 GiB; increased the file system size of ESOS_BOOT, esos_root, esos_conf, and esos_logs; use powers of 1024 for partition sizes/alignment; delete the /boot directory that was leftover in the LABEL=esos_root file system; install.sh: only increase the /tmp size to 6G if it's less than 6G (otherwise keep current size), check for an 8 GiB sized block device install target, for large install devices, make LABEL=esos_logs 64 GiB in size; usb_sync.sh: run the initial-rsync command BEFORE initializing the local /etc Git repo (allows special override files in rsync_dirs/ to copy down properly regardless of date/time)
+
+2021-09-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'squashfs_lzma'
+
+	use xz compression (LZMA2) for squashfs images; make sure /root/.bash_history always exists by default (fixes rsync problem with recent change)
+
+2021-09-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bash_history'
+
+	handle appending bash history and sync'ing it
+
+2021-09-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210919_changes'
+
+	sbd: added patch to handle non-quorum disk writes (allows fencing with a single SBD device)
+
+	updated resource-agents patch (ocf:heartbeat:VirtualDomain -> handle detecting all "domain not found" strings)
+
+	disabled the AoE (ATA over Ethernet) driver... i doubt anyone is using this still, and it produces ugly log spam in some setups (eg, "aoe: packet could not be sent on vnet22.  consider increasing tx_queue_len")
+
+	Merge branch 'add_cmd2'
+
+	Python.chroot: added the 'cmd2' module (and required deps)
+
+2021-09-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	build dep fix for makedumpfile
+
+2021-09-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210913_updates'
+
+	updated OpenSSL to version 1.1.1l; updated OpenSSH to version 8.7p1; added the xz.chroot target and set as a dep for Python.chroot (this will then build the lzma module properly; disabled xz/lzma Busybox applets
+
+	updated Linux to version 5.4.145
+
+	enabled the CONFIG_NTB_PINGPONG and CONFIG_NTB_TOOL kernel options (as modules for testing NTB)
+
+2021-09-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210910_updates'
+
+	rc.network: updates to handle the VLAN egress priority map (vlanegressmap) setting; TUI: allow user to set the VLAN egress priority map of an interface in the network settings dialog, always set a default MTU value (1500) even if we don't recognize the interface
+
+2021-09-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'libvirtd_exporter'
+
+	added the 'libvirtd_exporter' package and associated rc/init script (disabled by default)
+
+2021-08-31  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_usbutils'
+
+	added the 'usbutils' package and disabled 'lsusb' in Busybox config
+
+2021-08-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_gptfdisk'
+
+	added the 'gptfdisk' package (provides gdisk, cgdisk, sgdisk, and fixparts)
+
+2021-08-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'edac_drivers'
+
+	enabled the CONFIG_EDAC_AMD64 and CONFIG_EDAC_SKX drivers
+
+2021-08-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	adjust root tmpfs sizes again; use '--sparse' with cpio to staging directory
+
+2021-08-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210816_tweaks'
+
+	moved ocaml and findlib to bootstrap targets (not needed at run time); util-linux complains about ncurses dep at times; updated image target to select root tmpfs size based on build options
+
+	added the 'guestfs_app' package (libguestfs appliance image); added the 'pv' utility; fixed exec path for libguestfs
+
+2021-08-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_libguestfs'
+
+	when using '--enable-qemu' also build/install "libguestfs" (and required deps)
+
+2021-08-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_loop'
+
+	install.sh: updated to support "loop" devices as install targets
+
+2021-08-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_nbd'
+
+	install.sh: support NBD block devices
+
+2021-08-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mdraid_stop_nested'
+
+	Makefile.in: massage 'scstadmin' so it doesn't produce an ugly warning when applying the config with the '-lip' option and no FC ports present; rc.mdraid: handle stopping "nested" MD RAID arrays
+
+2021-07-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210726_tweaks'
+
+	rc.2: re-enable the Microsemi NTB driver and Virtual Ethernet (NTB) driver; install.sh: on some systems, blockdev and wipefs fail on the first attempt... lame work-around for now is to simply wait and retry; initramfs: rather than taking an explicit interface name, attempt a DHCP lease on all interfaces that have link, and stop after the first lease is obtained (needs testing)
+
+2021-07-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_iproute2'
+
+	added the 'iproute2' package (provides 'ip' program among others); disabled 'ip' and 'tc' applets in Busybox
+
+2021-07-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'cpupower_tweaks'
+
+	added the '/etc/pam.d/sudo' file; rc.sysinit: disable C2 state and set CPU governor to "performance"
+
+2021-07-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210711_changes'
+
+	updated GDB to version 10.2 and enabled Python support; updated mount options for fstab
+
+2021-07-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210706_changes'
+
+	updated 'make' to version 4.3 (resolves slow parallel build issue related to pselect)
+
+	Merge branch '20210705_changes'
+
+	bootstrap build fixes
+
+2021-07-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'gearshot-master'
+
+	ignore 'libffi' dep file
+
+2021-06-30  Chris Graves  <chris.graves@quantum.com>
+
+	Python is upgraded from 3.6.8 to 3.9.5, and python package cherrypy is added, (with 9 required modules).  A few makefile changes are required for the build. All python packages are updated to latest available based on pip3 install with Python-3.9.5.
+
+2021-06-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210627_changes'
+
+	iso_installer.sh: don't attempt to mount the CD-ROM if we're using the NFS option, applied several shellcheck recommendations
+
+	Merge branch '20210625_changes'
+
+	include the bnxt_en driver in the initramfs image, install the default.script file for udhcp, create /etc in the initramfs image (udhcpc writes to resolv.conf); build dep fix for libnftnl; rc.0: don't stop the network if we're using an ISO via NFS; busybox: enable NFS mount support; initramfs_init: load bnxt_en, handle new 'nfs_dhcp_iface', 'nfs_iso_device', and 'nfs_mnt_opts' kernel params (mount an ISO via NFS); health_chk.sh: fix parsing issue when using 'esos_persist' mode
+
+2021-05-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_sbd_fix'
+
+	rc.sbd: updates to auto-unfencing logic that relies on filenames instead of file metadata (creation time) since using Git for /etc/ obliterates ctime attributes
+
+2021-05-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_sbd_unfence'
+
+	rc.sbd: updates to handle starting SBD with SBD_STARTMODE="always" if the number of starts is below the threshold in the given amount of time (3 or less in 15 minutes)
+
+2021-05-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bcache-tools_fix'
+
+	applied additional patches to the bcache-tools package which updates the udev rule to reliably create the CACHED_UUID and CACHED_LABEL symlinks
+
+2021-05-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	added a bcache patch that resolves a data corruption issue (applied v2 of this patch): https://marc.info/?l=linux-bcache&m=161979388124331&w=2
+
+2021-05-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '0430_tweaks'
+
+	install.sh: added missing whitespace in echo statement
+
+2021-04-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210401_tweaks'
+
+	added the 'sdparm' software package; install.sh: for now, rely on lazy sleep statements for partition devices to be created (TODO: handle this in a loop)
+
+2021-03-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mlnx_nvme_mp'
+
+	disable CONFIG_NVME_MULTIPATH for the MOFED NVMe drivers; fixed a build dep issue for open-lldp.chroot
+
+2021-03-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'fix_profile'
+
+	set EDITOR and VISUAL env vars to point to 'vim'
+
+2021-03-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'vim_defaults'
+
+	updated vim defaults to disable visual mouse feature
+
+2021-03-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'initramfs_fsck'
+
+	e2fsprogs.chroot: include the static version of 'e2fsck' for initramfs; initramfs_init: run e2fsck on the root FS (boot media) and exit to the rescue shell if uncorrectable errors are present
+
+2021-03-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20210304_tweaks'
+
+	Python.chroot: include the 'wrapt' package
+
+	mdadm.chroot: include the 'mdcheck' script; move rc.virtlogd + rc.libvirtd to start earlier in rc.d/common
+
+2021-03-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'real_vim'
+
+	disable 'vi' in Busybox and use real vim
+
+2021-02-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_tcpdump'
+
+	added the tcpdump package (version 4.99.0)
+
+2021-02-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'up_drbd-utils'
+
+	updated drbd-utils to version 9.16.0
+
+2021-02-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ext4_boot'
+
+2021-02-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	use 'ext4' instead of 'ext2' for the ESOS file systems
+
+2021-02-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'pacemaker_stop'
+
+	use 'sulogin' from the util-linux package (instead of BB); when calling stop() in rc.pacemakerd, if we fail to stop call sulogin so we can investigate (critical to understand/diagnose why the cluster failed to stop cleanly)
+
+2021-02-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_msmtp'
+
+	added the 'msmtp' package and associated 'rc.msmtpd' init/rc script (disabled by default)
+
+2021-02-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'cls_switchtec'
+
+	updated the cls_switchtec package (4.0.0_5.4_20210204)
+
+2021-02-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'msevy-quantum-new_pkg'
+
+	Merge branch 'new_pkg' of https://github.com/msevy-quantum/esos into msevy-quantum-new_pkg
+
+	Merge branch 'alua_rescan_fix'
+
+	misc:esos:alua: in alua_demote() restore original use of bio_dev_to_redirect otherwise we fail to rescan the SCSI bus and miss device name changes
+
+2021-02-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sysvinit_ver'
+
+	fixed make path for sysvinit (now shows version string correctly on boot)
+
+2021-02-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'virt_fixes'
+
+	use individual mounts for cgroup controllers (resolves cgroup issue with libvirt); enabled CONFIG_IP6_NF_NAT in the kernel config (libvirt)
+
+	added iptables (deps libmnl, libnftnl) and dnsmasq packages (for libvirt); qemu.chroot: install most firmware/bios blobs; libvirt.chroot: specify a qemu user/group, install schemas directory; cleaned up users/groups (added qemu); added the rc.virtlogd init/rc script; enabled kernel options for firewall support and cgroups
+
+2021-01-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_local_lib'
+
+	create /usr/local/lib[64] for "local" libraries; updated ld.so.conf to use it
+
+2021-01-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bnxt_mod'
+
+	added build optional for third-party bnxt_en driver compile/install; set in-tree bnxt_en driver as a module; load bnxt_en in rc.2
+
+2021-01-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'qla_fix'
+
+	when using '--with-qla2xxx_scst=' zap the in-tree qla2xxx.ko module so it doesn't conflict
+
+2021-01-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'qlogic_updates'
+
+	updated QLogic firmware package; added support for newer third-party QLogic drivers (eg, 11.x); updated default QLogic module parameters optimized for target mode
+
+2021-01-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '0125_updates'
+
+	use "CREATE bbl=no" in the default /etc/mdadm.conf file to ensure the MD RAID BBL feature is not used during creation; rc.0: if MD boot arrays are resync'ing, then the "name" column is off by one so we handle this; install.sh: provide the '--force' argument to blkdiscard to minimize noise, and removed old info lines (echo'd)
+
+2021-01-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'esos_persist'
+
+	esos2iso.sh: fix version-string sed line; removed sleep debug lines in rc.0 and rc.sysinit; install.sh: updates to handle esos_persist; iso_installer.sh: use new root FS path (/mnt/root)
+
+	include the helpful 'findmnt' utility from util-linux; display the version string the ISO menu; updated cron job for fsck to only print for fatal errors; updates to rc.0, rc.fsmount, rc.dump, rc.sysinit, helper scripts and install.sh for 'esos_persist' mode
+
+2021-01-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_enhancements'
+
+	fixed an issue in image target (handle non-existent file with xargs)
+
+2021-01-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the 'haveged' package and created and associated rc/init script... this daemon helps provide/increase entropy (in certain cases, some systems don't produce enough on boot for other services that rely on /dev/random)
+
+	several build fixes; updated default rc options for prometheus; added kernel option for detecting hung tasks (soft/hard)
+
+2021-01-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'esos_data'
+
+	updated util-linux version (resolves issue with 'sfdisk'); install.sh: updates for large-disk-partition scheme to work with sfdisk; boot_raid1.sh: use sfdisk to copy the partition table as it seems simply copying the MBR does not work for extended/logical partitions
+
+	startup.sh: resolved issue with lingering 'esos_logs' mount (stuck) when doing an ISO install
+
+2021-01-19  msevy  <michael.sevy@quantum.com>
+
+	Update sg_utils package to 1.45
+
+2021-01-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	dosfstools.chroot: install the compatibility links; configure.ac: create the /mnt/data directory; /etc/fstab: add an entry for /mnt/data; rc.0: stop 'esos_data' if exists; rc.fsmount: don't exit the script early if a FS fails fsck, handle non-existent ESOS file system devices; rc.mdraid: ignore 'esos_data' if exists; install.sh: support creating an additional 'esos_data' file system (and partition) for large target installation devices; boot_raid1.sh: support the new 'esos_data' file system (create matching MD RAID1 array if found)
+
+	Merge branch 'bootstrap_fix'
+
+2021-01-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	call 'pre_bootstrap' in default target; updated pre_bootstrap target (moved info file generation into separate target, check for existence of local file before attempting to download again); tar invocation fixes when generating the bootstrap archive
+
+	Merge branch 'canned_bootstrap'
+
+	first crack at a pre-built bootstrap setup where "bootstrap" (everything generated by said target) is archived and can be published -- a file using the Makefile lines for all of the bootstrap targets and package versions is created and checksum'd... we then use that checksum to determine if we can fetch/extract a pre-built bootstrap tarball, or if we need to build fresh
+
+2021-01-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_pkgs'
+
+	added the 'procps' package and removed associated programs from Busybox config + updated rc/init scripts that use absolute path to affected programs
+
+	added the 'jq' package (and required dep 'oniguruma')
+
+	added the 'prometheus' package and created a new rc/init script for the service (disabled by default)
+
+2021-01-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_tweaks'
+
+	util-linux.chroot: include the wdctl tool; rc.sysinit: only attempt to expand 'esos_logs' if we're NOT running from an ISO; boot_raid1.sh: updates to use separate mount points for original file systems, keep label names in variables, and don't get for mounted file systems if we're running on an ISO; iso_installer.sh: make output prettier
+
+2021-01-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'gen_iso_fix'
+
+	updated INSTALL doc; fixed issue in esos2iso.sh; initramfs_init: zap /etc/crontab when booting with 'esos_iso' (no need for crons to run during ISO install)
+
+	Merge branch 'gen_iso'
+
+	added the esos2iso.sh script for generating a bootable ESOS ISO file and isolinux components
+
+	Merge branch 'add_squashfs'
+
+	added squashfs-tools; cleanup (rm) /.cpan properly in perl.chroot; use mksquashfs instead of cpio for the root FS image; fix improper staging dir cleanup; require mksquashfs in configure script; use new squashfs/overlayfs setup in initramfs; updated install.sh script to handle sqsh images (and SECONDARY cpio slot); enabled squashfs/overlayfs options in kernel config; simplify iso_installer.sh
+
+2021-01-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_tweaks_2'
+
+	updated install.sh script to handle NO_PROMPT env var and fixed issue with arguments passed in; updated iso_installer.sh to handle pass NO_PROMPT as needed
+
+2020-12-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'iso_inst_fix'
+
+	rc.network: updated interface matching lines for 'privN' names; install.sh: re-work of device wiping logic and accept a third parameter to specify the install target "model" string; iso_installer.sh: use new kernel param syntax
+
+2020-12-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'customize_fix'
+
+	build fixes for the with-customize-dir option
+
+	Merge branch 'remove_ra'
+
+	remove rpc_agent stuff
+
+2020-12-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_kvm'
+
+2020-12-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the rc.libvirtd script and updated rc.conf (does not start on boot by default)
+
+2020-12-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	enabled additional IOMMU and VFIO kernel drivers
+
+	more build fixes for libvirt
+
+	more build updates for libvirt
+
+2020-12-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the pixman package (dep for qemu); added a patch for qemu which resolves bild issues; updated qemu recipe
+
+2020-12-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	initial commit for KVM (QEMU)
+
+2020-12-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '306_updates' into 3.x.x
+
+	install.sh: when performing an in-place upgrade, sometimes kpartx/losetup fail to cleanup the loop device properly when the image package is used from some other file system / medium (eg, NFS) -- handle this by performing a sync first, and then if either program fails, wait a few seconds then try it again before failing permanently
+
+2020-12-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	install.sh: when performing an in-place upgrade, sometimes kpartx/losetup fail to cleanup the loop device properly when the image package is used from some other file system / medium (eg, NFS) -- handle this by performing a sync first, and then if either program fails, wait a few seconds then try it again before failing permanently
+
+2020-12-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated build deps
+
+	updated OpenSSL to version 1.1.1i
+
+	updated the cls_switchtec driver to produce less verbose output
+
+	Merge branch '305_updates' into 3.x.x
+
+	updated build deps
+
+	updated OpenSSL to version 1.1.1i
+
+	updated the cls_switchtec driver to produce less verbose output
+
+2020-12-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '304_update' into 3.x.x
+
+	health_chk.sh: for MegaRAID adapters, "JBOD" is a valid PD state
+
+2020-12-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	health_chk.sh: for MegaRAID adapters, "JBOD" is a valid PD state
+
+2020-11-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated the Linux kernel patch to include a change for bcache that fixes a common kernel panic... it seems GCC 9.1.0 "optimizes" the closure_sync_fn() function and causes the assembly produced by the compiler to be out of order; before the patch: 0000000000008af4 <closure_sync_fn>:     8af4:       48 8b 47 08             mov    0x8(%rdi),%rax     8af8:       c7 40 08 01 00 00 00    movl   $0x1,0x8(%rax)     8aff:       48 8b 38                mov    (%rax),%rdi     8b02:       e8 00 00 00 00          callq  8b07 <closure_sync_fn+0x13>     8b07:       c3                      retq
+	and after the patch:
+	0000000000008af4 <closure_sync_fn>:
+	    8af4:       48 8b 47 08             mov    0x8(%rdi),%rax
+	    8af8:       48 8b 38                mov    (%rax),%rdi
+	    8afb:       c7 40 08 01 00 00 00    movl   $0x1,0x8(%rax)
+	    8b02:       e8 00 00 00 00          callq  8b07 <closure_sync_fn+0x13>
+	    8b07:       c3                      retq
+
+	Merge branch 'bcache_fix' into 3.x.x
+
+	updated the Linux kernel patch to include a change for bcache that fixes a common kernel panic... it seems GCC 9.1.0 "optimizes" the closure_sync_fn() function and causes the assembly produced by the compiler to be out of order; before the patch: 0000000000008af4 <closure_sync_fn>:     8af4:       48 8b 47 08             mov    0x8(%rdi),%rax     8af8:       c7 40 08 01 00 00 00    movl   $0x1,0x8(%rax)     8aff:       48 8b 38                mov    (%rax),%rdi     8b02:       e8 00 00 00 00          callq  8b07 <closure_sync_fn+0x13>     8b07:       c3                      retq
+	and after the patch:
+	0000000000008af4 <closure_sync_fn>:
+	    8af4:       48 8b 47 08             mov    0x8(%rdi),%rax
+	    8af8:       48 8b 38                mov    (%rax),%rdi
+	    8afb:       c7 40 08 01 00 00 00    movl   $0x1,0x8(%rax)
+	    8b02:       e8 00 00 00 00          callq  8b07 <closure_sync_fn+0x13>
+	    8b07:       c3                      retq
+
+2020-11-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	install.sh: use 'losetup -d' after upgrade to close the image file
+
+	Merge branch 'install_fix' into 3.x.x
+
+	install.sh: use 'losetup -d' after upgrade to close the image file
+
+2020-11-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '301_updates' into 3.x.x
+
+	ocf:esos:alua: several updates to improve failover/failback duration (less) -- don't use trigger_suspend_resume() in set_tpg_trans() (appears to no longer be needed), updated bio_dev_to_real() and bio_dev_to_redirect() to background deactivate/activate operations in a loop, then wait at the end of each step
+
+	Python.chroot: install version '0.1.0' of py-dmidecode
+
+	updated sedutil package
+
+2020-11-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	ocf:esos:alua: several updates to improve failover/failback duration (less) -- don't use trigger_suspend_resume() in set_tpg_trans() (appears to no longer be needed), updated bio_dev_to_real() and bio_dev_to_redirect() to background deactivate/activate operations in a loop, then wait at the end of each step
+
+2020-10-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Python.chroot: install version '0.1.0' of py-dmidecode
+
+2020-10-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated sedutil package
+
+2020-10-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated sedutil-cli package
+
+2020-10-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'scst_update'
+
+	updated SCST to version 3.4.x/r9170
+
+	Merge branch 'add_sedutil'
+
+	added the sedutil package (needed 'sedutil-cli')
+
+2020-10-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	enabled CONFIG_HOTPLUG_PCI_ACPI in the kernel config
+
+	Merge branch '5.4_update'
+
+	updated Linux to version 5.4.69; added two extra patches for bcache (from 5.6.x)
+
+2020-09-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	rc.2: load the NVMe target modules unconditionally
+
+	initramfs: load storage drivers BEFORE the delay
+
+2020-09-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	if using MOFED, install mlx_compat.ko into initramfs image and load this module first
+
+	build NVMe kernel drivers as modules (using MOFED replaces these drivers); updated rc.network to use 'ensX' interface names; updated the initramfs script to load the 'nvme' and 'nvme-core' drivers early
+
+	enabled NVMeoF for MOFED; recomposed -debug.patch for kernel config
+
+2020-09-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rc_network'
+
+	rework of the 'rc.network' script (lots of formatting fixes, properly remove defautl GW's, added the "apply" action) -- needs testing
+
+2020-09-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	enabled CONFIG_ACPI_APEI_* support and related/dep options
+
+	enabled CONFIG_USB_RTL8152
+
+2020-08-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bnxt_vf_fix'
+
+	apply Linux patch "bnxt_en: fix HWRM error when querying VF temperature" to silence messages with bnxt_en when used with VF's
+
+2020-08-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	re-add use of ocf_exit_reason in a couple spots (ocf:esos:alua)
+
+	ocf:esos:alua: in alua_stop() set $dev_grp_path, in alua_monitor() always call bio_dev_to_redirect if Slave, but only set local TPG to Slave if not already that value
+
+2020-08-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ra_master_fix'
+
+	ocf:esos:alua: add liberal use of ocf_exit_reason statements back into previously merged changes
+
+	ocf:esos:alua: fixed ordering of opening/closing SCST backing block devices and ALUA states (when using redirect_mode + use_trans_state settings) to prevent I/O errors during cluster state transitions
+
+2020-08-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sbd_update'
+
+	updated SBD to version 1.4.1
+
+2020-07-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'man_dir_fix'
+
+	fixed man page install location for fio.chroot and tcl.chroot
+
+	Merge branch 'master' of github.com:quantum/esos
+
+	Merge branch '0729_updates'
+
+	updated SCST to version 3.4.x/r9087; updated fio.chroot recipe to use the configure script and set the '--disable-native' build option (resolves GH issue #259)
+
+2020-07-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge pull request #260 from Brain2000/master
+	Fix snmpd not starting
+
+	don't use '--enable-diskerror' with rasdaemon (too much information that can be gathered elsewhere)
+
+	Merge branch 'script_tweaks'
+
+	archive_logs.sh and usb_sync.sh: handle an already mounted FS and print a warning line if we find it's already mounted
+
+2020-07-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'fix_ra_exit'
+
+	need double quotes around the argument to ocf_exit_reason
+
+2020-07-09  Brian Coverstone  <brian@mainsequence.net>
+
+	Fix snmpd not starting
+
+2020-06-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Python.chroot: include the 'pyudev' module via pip3
+
+2020-06-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	bcache: changing 'bch_cutoff_writeback' and 'bch_cutoff_writeback_sync' from the defaults is strongly discouraged (https://marc.info/?l=linux-bcache&m=159283608511021&w=2), so don't set these in modprobe.conf (use defaults)
+
+2020-06-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the 'kvm' group (GID 36) which prevents log messages like these: udevd[904]: specified group 'kvm' unknown
+
+2020-06-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	rc.sysinit: mount the cgroup FS (just one simple hierarchy for now for all v1 controllers)
+
+2020-06-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bcache_mod'
+
+	enable CONFIG_BCACHE as a module instead of built-in (allows us to set module parameters this way)
+
+2020-06-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	fixed the real build issue (was not SCST's fault) with double-quoting
+
+2020-06-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	added a build fix for SCST 3.4.x/r9005
+
+2020-06-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'up_5.4_kernel'
+
+	removed unused patch/config files; added libcap package for 'turbostat' (in Linux)
+
+	updated SCST to version 3.4.x/r8782 (and removed unneeded patch)
+
+	updated to Linux 5.4.45
+
+2020-06-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'node_export_fix'
+
+	set better default option string for 'node_exporter'
+
+	don't use '=' for the default options of rc.nodeexporter -- this causes problems when parsing (space works just fine for node_exporter)
+
+2020-06-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'big_bins'
+
+	updated telegraf to new version and now compressed with UPX; added node_exporter (Prometheus) which is also UPX compressed and added associated rc/init script (disabled by default)
+
+2020-06-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ra_tweaks'
+
+	updated ocf:esos:scst and ocf:esos:alua to make liberal use of the 'ocf_exit_reason' function so we get a better error message (exit reason) when looking at failures reported by the cluster
+
+2020-05-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'resync_dev_fix'
+
+	added an SCST patch that resolves a bug in 'scstadmin' when using the "-resync_dev" action
+
+2020-05-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-disable-blkid-cache'
+
+2020-05-14  Lars Holowko  <lars.holowko@quantum.com>
+
+	Disable libblk's cache used e.g. by blkid, wipefs
+
+2020-04-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-add-ssh-copy-id'
+
+	tweaked the install line for ssh-copy-id
+
+	Merge branch 'add-ssh-copy-id' of https://github.com/lholowko/esos into lholowko-add-ssh-copy-id
+
+	Merge branch 'lholowko-openssl-1.1.1g'
+
+	updated CHECKSUM files for new version of OpenSSL
+
+	Merge branch 'openssl-1.1.1g' of https://github.com/lholowko/esos into lholowko-openssl-1.1.1g
+
+2020-04-27  Lars Holowko  <lars.holowko@quantum.com>
+
+	Add ssh-copy-id to ESOS ssh-copy-id is only 10KB.
+
+2020-04-24  Lars Holowko  <lars.holowko@quantum.com>
+
+	Updated openssl to openssl-1.1.1g
+
+2020-04-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	set the fw_diag_log_size="128K" module option for ocs_fc_scst (enables RAS logging support)
+
+2020-04-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'qed_fw'
+
+	install the firmware for QED-adapters, configure QED and QEDE as modules, and load 'qede' on boot in rc.2
+
+2020-04-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'enable_qed'
+
+	enable the QLogic QED driver and associated options
+
+2020-04-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-minimize-locales'
+
+	supported locales: make the 'cp' command verbose and nix the additional echo statement
+
+	Merge branch 'minimize-locales' of https://github.com/lholowko/esos into lholowko-minimize-locales
+
+2020-04-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	start with the 'transitioning' ALUA state when loading/starting SCST instead of 'offline'
+
+2020-04-02  Lars Holowko  <lars.holowko@quantum.com>
+
+	Reduce size of /usr/lib/locale/locale-archive by excluding a lot of locales
+
+2020-03-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	rc.kdump: systems with lots of CPUs need nr_cpus > 1 in the capture kernel
+
+2020-03-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	initramfs: put the MD RAID boot device assembly stuff into a function, and call this function if a crash dump kernel is running / normal non-ISO boot
+
+	Merge branch 'jqwong-BLK-1115'
+
+	updated message strings to fit in 80 columns; replaced stray tab character with spaces (indent)
+
+	Merge branch 'BLK-1115' of https://github.com/jqwong/esos into jqwong-BLK-1115
+
+2020-03-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'io_tools'
+
+	added the iowatcher and iotop packages (useful for debugging Linux block I/O)
+
+2020-03-18  root  <jwong@jwong-development>
+
+	BLK-1115: update install.sh to bypass Y/N prompt on environment variable
+
+2020-03-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	create missing '/run/lock/iscsi' directory (open-iscsi)
+
+2020-03-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'iscsi_update'
+
+	updated open-iscsi to version 2.1.1
+
+2020-03-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'alua_ra_tweaks'
+
+	move the iSCSI session rescanning and SCSI bus rescanning into helper functions; enhance scsi_bus_rescan() by only rescanning iSCSI host entries; enhance iscsi_sess_rescan() by logging into iSCSI targets if none are logged in
+
+2020-03-04  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'zfs_update'
+
+	updated ZFS to version 0.8.3
+
+2020-03-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'scst_update'
+
+	updated SCST to version 3.4.x/r8782; changed the '--enable-qla' build option to '--enable-qla32' as the QLogic 32 Gb FC driver is now included in SCST itself (no separate package needed)
+
+2020-02-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'mofed_update'
+
+	updates to support MOFED 5.0
+
+2020-02-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated makedumpfile to version 1.6.7
+
+2020-01-20  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'blk_cntrlr'
+
+	enabled kernel options for the Block IO Controller
+
+2020-01-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'bnxt_en_fix'
+
+	include a kernel patch that resolves several bugs in the 'bnxt_en' driver: https://lore.kernel.org/netdev/1579239167-16362-1-git-send-email-michael.chan@broadcom.com/
+
+2020-01-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-master'
+
+	updated checksums for 'rasdaemon' package; added updated default options for 'rasdaemon' in /etc/rc.conf
+
+2020-01-16  Lars Holowko  <lars.holowko@quantum.com>
+
+	Upgrade rasdaemon to 0.65 Persistency did not work in old version. Also switched to pulling perl packages from CPAN.
+
+2020-01-16  Marc A. Smith  <marc.smith@quantum.com>
+
+	in getUsableBlockDevs() we must handle sysfs entries such as '/sys/block/cciss!c0d0' properly by converting the '!' to a '/' (eg, for /dev/)
+
+2020-01-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated to Linux 5.4.12; enabled the LPFC driver as a module
+
+2020-01-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '5.4_fixes'
+
+	rc.openibd: remove deleted IB modules (and entries from associated config file), ensure 'rdmavt' loads/unloads with start/stop; introduce a sleep in the SCST rc script and RA after stopping userland daemons, otherwise 'iscsi_scst' fails to unload properly (the 'iscsi-scstd' daemon ends, but still hanging on to some resources)
+
+2020-01-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'fix_drivers'
+
+	updated the 'cls_switchtec' package to support Linux 5.4.x
+
+2020-01-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_fix'
+
+	install.sh: exit if 'bunzip2' fails (using just "|| exit 1" does not handle this properly); iso_installer.sh: make sure the ISO is mounted before testing if extra_install.sh exists -- on some systems with a BMC KVM, the ISO / virtual CD-ROM mapping is flakey, and yes this is not atomic, but better than how it was
+
+	enabled the Switchtec NTB driver
+
+2020-01-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'jqwong-new_branch'
+
+	Makefile.in: updated to make jansson a built-in package that is not built by default (only with rapiddisk), rearranged code; configure.ac: removed --with-jansson lines
+
+	Merge branch 'new_branch' of https://github.com/jqwong/esos into jqwong-new_branch
+
+	Merge branch 'vibhav16-master'
+
+	removed stray build files from previous commit; updated rc.conf to include an options line for rc.lldpad; moved rc.lldpad to start earlier in rc.d/common; updated rc.d/rc.lldpad to source rc.d/common, tweaked message strings, set default options for lldpad; removed lldpad start/stop from rc.d/rc.scst; removed lldpad start/stop from the ocf:esos:scst RA
+
+	Merge branch 'master' of https://github.com/vibhav16/esos into vibhav16-master
+
+2019-12-30  jim wong  <jwong@jwong-development.QUANTUM.com>
+
+	Adding rapiddisk and jansson
+
+2019-12-30  vibhav16  <vibhavgoel97@gmail.com>
+
+	created lldpad init file
+
+2019-12-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	remove and re-extract for the 'tcl' target (we re-use the sources in 'tcl.chroot' now)
+
+2019-12-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_numactl'
+
+	Merge branch 'ibutils_fix'
+
+	added a patch for ibutils that resolves build issues and added the tcl.chroot target (dep for ibutils)
+
+2019-12-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	allow builds as user root
+
+2019-12-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the 'numactl' package and set as a dep for the 'fio' package (fio will build with libnuma support)
+
+	use mkfs.vfat and mkfs.ext2 instead of just mkfs with the '-t' argument so we can make sure those binaries exist in configure script; updated esos_kernels.chroot to handle newest ATTO Celerity FC and SCST drivers
+
+2019-12-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'disable_switchtec'
+
+	Merge branch 'disable_switchtec' into 2.x.x
+
+	disable loading the Microsemi Switchtec NTB driver for now (stability issues) -- still load 'cls_switchtec' so we get SES functionality
+
+2019-11-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'missing_mtu_fix'
+
+	Merge branch 'missing_mtu_fix' into 2.x.x
+
+	fixed an issue in the TUI where networkDialog() would allow an empty entry value for the interface MTU setting -- this produces an invalid configuration since the rc.network script attempts to always set the MTU and bails if it fails to do so
+
+2019-11-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sem_open_fix'
+
+	Merge branch 'sem_open_fix' into 2.x.x
+
+	'/dev/shm' must be mounted/available in the chroot environment otherwise sem_open() does not work and autoconf tests fail and some components don't build as expected (eg, like Python)
+
+	Merge branch 'linux_5.4'
+
+2019-11-22  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated Linux to version 5.4-rc8; several Makefile updates for new kernel version; commented out Switchtec driver in esos_kernels.chroot target for now
+
+2019-11-19  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'jubnzv-master'
+
+	Merge branch 'jubnzv-master' into 2.x.x
+
+	Merge branch 'master' of https://github.com/jubnzv/esos into jubnzv-master
+
+	Merge branch 'lholowko-BLK-1675'
+
+	Merge branch 'lholowko-BLK-1675' into 2.x.x
+
+	Merge branch 'BLK-1675' of https://github.com/lholowko/esos into lholowko-BLK-1675
+
+2019-11-15  Lars Holowko  <lars.holowko@quantum.com>
+
+	Pass esos_nvme value from kernel cmdline into extra_install.sh Allows us to ignore some steps during the install.
+
+2019-11-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'rescan_timeout'
+
+	Merge branch 'rescan_timeout' into 2.x.x
+
+	in some cases, the 'rescan-scsi-bus.sh' script takes a very long time to run and causes a resource timeout (too long to handle by increasing timeout value of resource) -- we handle this by using the 'timeout' command in front of this script
+
+2019-10-31  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'dhcp_dns_map'
+
+	Merge branch 'dhcp_dns_map' into 2.x.x
+
+	rc.network: when calling udhcpc for interfaces, utilize the '-F NAME' argument where NAME is the system host name -- this asks the DHCP server to set a DNS mapping using this value; moved hostname parsing ahead of interface config so we can use the hostname value with udhcpc
+
+2019-10-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-dont-backup-opt-v2'
+
+	Merge branch 'lholowko-dont-backup-opt-v2' into 2.x.x
+
+	Merge branch 'dont-backup-opt-v2' of https://github.com/lholowko/esos into lholowko-dont-backup-opt-v2
+
+2019-10-20  Georgy Komarov  <jubnzv@gmail.com>
+
+	Fix resourse leaks in errors handling
+
+2019-10-18  Lars Holowko  <lars.holowko@quantum.com>
+
+	Do not backup /opt and include hostname and esos-version in generated archive file
+	/opt contains static files that are part of a build - no need to back them up.
+	Including the hostname and esos-version in the archive's file name makes it easier to match up a backup file and the host during restore.
+
+2019-10-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'enable_ses'
+
+	Merge branch 'enable_ses' into 2.x.x
+
+	enabled the CONFIG_ENCLOSURE_SERVICES and CONFIG_SCSI_ENCLOSURE kernel options (to support SES via sysfs); enabled CONFIG_SCSI_SCAN_ASYNC to speed up boots with lots of SAS enclosures/drives
+
+2019-10-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20191009_tweaks'
+
+	Merge branch '20191009_tweaks' into 2.x.x
+
+	added several helper scripts for SBD and cluster services; updated default modprobe options for 'ocs_fc_scst'; updated kernel config to enable max CPU's, AMD power settings and transparent huge pages (madvise as default)
+
+2019-10-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'enable_mod_sig'
+
+	Merge branch 'enable_mod_sig' into 2.x.x
+
+	enable module signing support (permissive for now) in the kernel config; OpenSSL is a dep now for building the kernels
+
+	Merge branch 'enable_netdev'
+
+	Merge branch 'enable_netdev' into 2.x.x
+
+	re-enable loading of the Switchtec + NTB Virtual Ethernet modules (rc.2)
+
+2019-09-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'disable_netdev'
+
+	Merge branch 'disable_netdev' into 2.x.x
+
+	temporarily disable the 'ntb_hw_switchtec' and 'ntb_netdev' modules (but load cls_switchtec for SES)
+
+	Merge branch 'ra_tweaks_pt_2'
+
+	Merge branch 'ra_tweaks_pt_2' into 2.x.x
+
+	fixed issue in mlnx_ofed.chroot (/etc/infiniband/ directory wasn't being created); don't let iscsiadm run forever in ocf:esos:alua (use timeout command)
+
+2019-09-23  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_tweaks'
+
+	Merge branch 'more_tweaks' into 2.x.x
+
+	several fixes for mlnx_ofed.chroot; set a less verbose logging level for the 'ocs_fc_scst' module; increase rc stop() timeout (120 -> 300)
+
+	Merge branch 'ra_tweaks'
+
+	Merge branch 'ra_tweaks' into 2.x.x
+
+	in test_if_dev_ready() of ocf:esos:alua make it clear what commands are being run by using additional ocf_log lines; in scst_start() of ocf:esos:scst ensure the target group state (ALUA) is "offline" in the config file
+
+2019-09-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'crypto_bump'
+
+	Merge branch 'crypto_bump' into 2.x.x
+
+	latest paramiko module should use the latest cryptography module (2.7)
+
+2019-09-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'paramiko_bump'
+
+	Merge branch 'paramiko_bump' into 2.x.x
+
+	use paramiko version 2.6.0 (fixes Paramiko throws an InvalidKey exception for ed25519 encryption if the comment is a certain length)
+
+2019-08-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'lholowko-flock'
+
+	Merge branch 'lholowko-flock' into 2.x.x
+
+	minor formatting tweaks
+
+	Merge branch 'flock' of https://github.com/lholowko/esos into lholowko-flock
+
+2019-08-28  Lars Holowko  <lars.holowko@quantum.com>
+
+	Use flock to prevent concurrent configuration updates Fixes BLK-759
+
+2019-08-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'add_ibutils'
+
+	Merge branch 'add_ibutils' into 2.x.x
+
+	added the ibutils package and updated mlnx_ofed.chroot to install additional scripts for MOFED functionality
+
+2019-08-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ib_core_mod'
+
+	Merge branch 'ib_core_mod' into 2.x.x
+
+	build ib_core (CONFIG_INFINIBAND) as a module to support MOFED (CONFIG_NVME_RDMA and CONFIG_NVME_TARGET_RDMA must be modules as well)
+
+	Merge branch 'ram_disk_mod'
+
+	Merge branch 'ram_disk_mod' into 2.x.x
+
+	build CONFIG_BLK_DEV_RAM (/dev/ramN) as a module instead of built-in -- easier to change options (eg, size) without rebooting
+
+2019-08-06  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'addtl_ib_mods'
+
+	Merge branch 'addtl_ib_mods' into 2.x.x
+
+	updated kernel config to better support MOFED (additional IB drivers now build as expected with MOFED)
+
+2019-08-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20190805_updates'
+
+	Merge branch '20190805_updates' into 2.x.x
+
+	build CONFIG_BLK_DEV_NULL_BLK as a module so we can easily adjust driver arguments/settings
+
+	updated default options for rc.acpid
+
+	Merge branch 'mlnx_ofed'
+
+	Merge branch 'mlnx_ofed' into 2.x.x
+
+	all MOFED drivers build and built against SCST drivers with success; needs actual testing
+
+2019-08-03  Marc A. Smith  <marc.smith@quantum.com>
+
+	finished adding remaining pieces for '--with-mlnx_ofed' option -- builds modules as-is, need to disable IB modules via sed in kernel config when using mlnx_ofed and update SCST build
+
+2019-08-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated Mellanox OFED build recipe (builds with success, need to enable specific drivers); updated autoconf to add the '--with-mlnx_ofed' option
+
+2019-08-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20190801_updates'
+
+	Merge branch '20190801_updates' into 2.x.x
+
+	yet another fix for acpid; updated SCST to 3.3.x/r8493
+
+2019-07-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'acpid_fix'
+
+	Merge branch 'acpid_fix' into 2.x.x
+
+	use new sample 'power' event file and 'power.sh' script for acpid (replaces old acpid config)
+
+	started MLNX OFED integration, lots more to do
+
+2019-07-26  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'real_acpid'
+
+	Merge branch 'real_acpid' into 2.x.x
+
+2019-07-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	use the real version of acpid instead of the BB variant
+
+2019-07-18  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20190717_updates'
+
+	Merge branch '20190717_updates' into 2.x.x
+
+	disable NVMe support for lsscsi (parsing issues); use the '--remove' flag when calling rescan-scsi-bus.sh in the ocf:esos:alua RA; boot_raid1.sh: use an internal bitmap when creating the MD boot drive arrays
+
+2019-07-17  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20190716_tweaks'
+
+	Merge branch '20190716_tweaks' into 2.x.x
+
+	use MD volume names prefixed with 'esos_' to ensure uniqueness; updated install.sh to wipe all matching transport type devices found when using this installation mode (install_tran)
+
+2019-07-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'sysklogd_mod'
+
+	Merge branch 'sysklogd_mod' into 2.x.x
+
+	updated sysklogd package to a new version that supports the '-R ADDR' parameter; use the new rc.syslogd script in rc.2 + rc.0 for starting/stopping the system log daemon
+
+2019-07-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'better_clean'
+
+	Merge branch 'better_clean' into 2.x.x
+
+	fixed build issue with the new scst_qla2xxx_unified package; updated clean target to remove all source directories; don't attempt to clean all chroot targets since clean now removes the sources
+
+2019-07-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch '20190710'
+
+	Merge branch '20190710' into 2.x.x
+
+	fixes for the linux-4.14.120 patch; use 'clean' instead of 'distclean' for nginx.chroot target (resolves GH issue #233)
+
+2019-07-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'qla_fixes'
+
+	Merge branch 'qla_fixes' into 2.x.x
+
+	updated the scst_qla2xxx_unified package (includes QLogic target driver fixes); additional patches for QLogic FC HBAs (kernel)
+
+2019-07-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'build_fix'
+
+	Merge branch 'build_fix' into 2.x.x
+
+	use 'clean' instead of 'distclean' in GDB target
+
+2019-07-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'ocs_sdk_updates'
+
+	Merge branch 'ocs_sdk_updates' into 2.x.x
+
+	cleanup/updates for current versions of the OCS SDK driver
+
+2019-07-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'zfs_update'
+
+	Merge branch 'zfs_update' into 2.x.x
+
+	updated ZFS to version 0.8.1
+
+	Merge branch 'install_fixes'
+
+	Merge branch 'install_fixes' into 2.x.x
+
+	rc.nfsd: fixed path issue for rpcbind; install.sh: bail if we can't find a device for the given transport type
+
+2019-07-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'june_updates'
+
+	Merge branch 'june_updates' into 2.x.x
+
+	use correct directory + Makefile when cleaning rpc_agent
+
+2019-06-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	increase root tmpfs size by 256 MB; exclude /usr/share/xml/ during image creation
+
+	fixed a number of TUI code warnings that are now visible with newer GCC version
+
+2019-06-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'more_cleanup'
+
+	Merge branch 'more_cleanup' into 2.x.x
+
+	updated chroot targets to clean up after themselves to further support repeat builds using same source tree
+
+2019-06-27  Marc A. Smith  <marc.smith@quantum.com>
+
+	ocf:esos:alua -> syntax changed for 'timeout' command in Busybox
+
+	make the 'clean' target actually do something useful by clearing out the chroot structure (minus sources + tools); added a new 'clean_bootstrap' target which behaves like the old clean where we remove bootstrap stuff; boot_raid1.sh: fixed a bug ("/boot" not "boot")
+
+2019-06-25  Marc A. Smith  <marc.smith@quantum.com>
+
+	use product name / version strings consistently in TUI and other scripts / config files
+
+2019-06-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	removed commercial bits from autoconf script, Makefile, and TUI
+
+	Merge branch 'simple_tui'
+
+	Merge branch 'simple_tui' into 2.x.x
+
+	cleanup of "simple TUI" build option, removed commercial bits from TUI
+
+2019-06-15  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'zfs_update'
+
+	Merge branch 'zfs_update' into 2.x.x
+
+2019-06-14  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated ZFS to version 0.8.0 (separate SPL package is no longer required)
+
+	Merge branch '20190613_updates'
+
+	Merge branch '20190613_updates' into 2.x.x
+
+2019-06-13  Marc A. Smith  <marc.smith@quantum.com>
+
+	modprobe.conf: use DMA mode with the ntb_transport module
+
+2019-06-12  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'iscsiadm_fix'
+
+	Merge branch 'iscsiadm_fix' into 2.x.x
+
+	libopeniscsiusr is needed with iscsiadm (open-iscsi.chroot)
+
+	Merge branch 'crmsh_fix'
+
+	Merge branch 'crmsh_fix' into 2.x.x
+
+	use previous version of crmsh as 3.0.4 does not seem to support Python 3.x
+
+	Merge branch 'strip_debug'
+
+	Merge branch 'strip_debug' into 2.x.x
+
+	revert to using just '--strip-debug' with strip (too aggressive of stripping causes issues)
+
+	Merge branch '20190611_updates'
+
+	Merge branch '20190611_updates' into 2.x.x
+
+	removed stale sed patch lines for busybox and add a new sed patch line to make pidof behave as we expect it; use more aggressive arguments with strip
+
+2019-06-11  Marc A. Smith  <marc.smith@quantum.com>
+
+	enable CONFIG_DEBUG in Busybox so we get debug symbols (we strip later as directed); fix up of ISO installer stuff, try #2
+
+2019-06-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'install_fixes'
+
+	Merge branch 'install_fixes' into 2.x.x
+
+	install.sh: don't exit if blockdev fails to re-read the partition table; initramfs_init: modify inittab using 'once' instead of normal respawn
+
+	Merge branch 'addtl_tweaks'
+
+	Merge branch 'addtl_tweaks' into 2.x.x
+
+	Python SQL support (psycopg2, mysqlclient, SQLAlchemy, and all required libraries) is now a build-time option (disabled by default)
+
+	removed perf-agent (deprecated) and associated scripts / config files
+
+2019-06-09  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated to make nginx a build-time option to enable (along with the pcre dependency) which is disabled by default
+
+	updated to make lessfs (now deprecated) a build-time option to enable (along with required dependencies) which is disabled by default
+
+	removed ESOS Web UI bits
+
+	Makefile.in: don't install Django and related plugins
+
+2019-06-08  Marc A. Smith  <marc.smith@quantum.com>
+
+	updated open-iscsi package; set CFLAGS and CXXFLAGS in the build_all.sh script (chroot); fixed man page installation path for a couple packages
+
+2019-06-07  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'minor_tweaks'
+
+	Merge branch 'minor_tweaks' into 2.x.x
+
+	Makefile.in: adjusted the esos_ver variable to use rel_name if a Git tag was found, otherwise use dev_name; grub.cfg: use search to set 'root' using the ESOS_BOOT file system label
+
+	Merge branch 'switchtec_update'
+
+	Merge branch 'switchtec_update' into 2.x.x
+
+	updated the switchtec-kernel package to the new Celestica Switchtec driver (4.0.0)
+
+2019-06-05  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'debug_pkg_updates'
+
+	Merge branch 'debug_pkg_updates' into 2.x.x
+
+	updated the gdb, valgrind, and strace packages to the latest versions (thanks Lars)
+
+	Merge branch 'install_updates'
+
+	Merge branch 'install_updates' into 2.x.x
+
+	updated the ISO installer script to use the ESOS ISO name with findfs to resolve the CD-ROM device, and pass the installation transport type ISO option to the ESOS installation script
+
+	install.sh: updated installer script to handle accepting an optional second argument for specifying a device transport type... if given (and first argument is an empty string), we attempt to find the block device from the TRAN column of lsblk and use first device found; initramfs_init: for the ESOS ISO, use findfs to resolve the CD-ROM device (using ISO name)
+
+	Merge branch 'build_fixes'
+
+	Merge branch 'build_fixes' into 2.x.x
+
+	added the setuptools package for bootstrap stage (needed for meson package); build fixes for Python (pre-chroot); build fixes for cmake
+
+2019-06-02  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'raid1_fix'
+
+	Merge branch 'raid1_fix' into 2.x.x
+
+	updated patch for the ocf:heartbeat:Raid1 RA
+
+	copied Linux kernel patch for new version
+
+	copied Linux kernel patch for new version
+
+	Merge branch 'qla_patch'
+
+	Merge branch 'qla_patch' into 2.x.x
+
+	Merge branch 'lholowko-pkg-update-2019-05-17'
+
+	Merge branch 'lholowko-pkg-update-2019-05-17' into 2.x.x
+
+	build fixes: patches for new versions of groff and rpcbind no longer needed, add patch for ncurses 6.1, fix patch format for openssl
+
+2019-06-01  Marc A. Smith  <marc.smith@quantum.com>
+
+	added the 'apply_pkg_patch' command sequence to better handle applying package patches, and updated all package targets that use patches; specify --sysconfdir for attr.chroot and acl.chroot; updated image target to filter un-needed files
+
+	several updates to refine build process, more tweaks to come...
+
+2019-05-30  Marc A. Smith  <marc.smith@quantum.com>
+
+	several updates to refine build process, more tweaks to come...
+
+2019-05-29  Marc A. Smith  <marc.smith@quantum.com>
+
+	esos_kernels.chroot: apply Linux kernel patch using correct location
+
+	several updates to refine build process, more tweaks to come...
+
+2019-05-28  Marc A. Smith  <marc.smith@quantum.com>
+
+	introduced a patch for Linux 4.14.91 which resolves two issues with the QLogic FC target driver (qla2xxx)
+
+	several updates to refine build process, more tweaks to come...
+
+	Merge branch 'pkg-update-2019-05-17' of https://github.com/lholowko/esos into lholowko-pkg-update-2019-05-17
+
+	Merge branch 'for_2.1' into 2.x.x
+
+2019-05-24  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'for_2.1'
+
+	enabled kernel options for NVDIMM support; added the ndctl package (and kmod dep)
+
+2019-05-21  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'qla_nvme_fc_off'
+
+	Merge branch 'qla_nvme_fc_off' into 2.x.x
+
+	modprobe.conf: use 'ql2xnvmeenable=0' for the qla2xxx module to disable FC-NVMe as leaving this enabled causes FCP connectivity issues for some initiator-side adapters
+
+2019-05-17  Lars Holowko  <lars.holowko@quantum.com>
+
+	update most package to current versions as of 2019-05-17
+
+2019-05-10  Marc A. Smith  <marc.smith@quantum.com>
+
+	Merge branch 'for_2.1'
+
+	updated getNetConfChoice() in the TUI so the Ethernet interface name has some space between the field to it's right
+
+	an issue with stunnel was discovered where it continually consumes memory until the daemon exits -- issue is related to the resource cleanup with pthreads; we will work around this bug by using fork as the threading model in stunnel (instead of the default pthreads)
+
 2019-05-02  Marc A. Smith  <marc.smith@quantum.com>
 
+	Merge branch 'fix_tui_sync'
+
+	Merge branch 'fix_tui_sync' into 2.x.x
+
+	the syncConfig() TUI dialog should use conf_sync.sh and not usb_sync.sh
+
 	Merge branch 'alua_ra_fix'
+
+	Merge branch 'alua_ra_fix' into 2.x.x
 
 2019-04-30  Marc A. Smith  <marc.smith@quantum.com>
 

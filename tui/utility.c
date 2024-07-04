@@ -362,7 +362,6 @@ boolean checkInetAccess() {
     }
 
     /* Done */
-    //freeaddrinfo(requests[0]->ar_request);
     freeaddrinfo(requests[0]->ar_result);
     free(requests);
     return has_inet;
@@ -379,7 +378,7 @@ boolean checkInetAccess() {
 char *prettyShrinkStr(size_t max_len, char *string) {
     size_t curr_size = 0, char_to_del = 0, left_len = 0, right_len = 0;
     char *right_half = NULL, *curr_pos = NULL;
-    char str_buff[MISC_STRING_LEN] = {0};
+    char str_buff[MISC_STRING_LEN + 1] = {0};
     static char ret_buff[MAX_SYSFS_ATTR_SIZE] = {0};
     int i = 0;
 
@@ -433,7 +432,7 @@ int getUsableBlockDevs(CDKSCREEN *cdk_screen,
         char blk_dev_name[MAX_BLOCK_DEVS][MISC_STRING_LEN],
         char blk_dev_info[MAX_BLOCK_DEVS][MISC_STRING_LEN],
         char blk_dev_size[MAX_BLOCK_DEVS][MISC_STRING_LEN]) {
-    int dev_cnt = 0, blk_dev_fd = 0;
+    int dev_cnt = 0, blk_dev_fd = 0, i = 0;
     char *error_msg = NULL, *boot_dev_node = NULL;
     char dir_name[MAX_SYSFS_PATH_SIZE] = {0},
             tmp_buff[MAX_SYSFS_ATTR_SIZE] = {0},
@@ -466,6 +465,11 @@ int getUsableBlockDevs(CDKSCREEN *cdk_screen,
             if (dir_entry->d_type == DT_LNK) {
                 snprintf(dev_node_test, MISC_STRING_LEN,
                         "/dev/%s", dir_entry->d_name);
+                /* Update string to handle the "cciss!cXdY" case */
+                for (i = 0; i <= strlen(dev_node_test); i++) {
+                    if (dev_node_test[i] == '!')
+                        dev_node_test[i] = '/';
+                }
                 /* Test to see if the block device is already open */
                 if ((blk_dev_fd = open(dev_node_test, O_EXCL)) == -1) {
                     continue;
@@ -580,6 +584,10 @@ int getUsableBlockDevs(CDKSCREEN *cdk_screen,
                     if (dev_cnt < MAX_BLOCK_DEVS) {
                         snprintf(blk_dev_name[dev_cnt], MISC_STRING_LEN, "%s",
                                 dir_entry->d_name);
+                        for (i = 0; i <= strlen(blk_dev_name[dev_cnt]); i++) {
+                            if (blk_dev_name[dev_cnt][i] == '!')
+                                blk_dev_name[dev_cnt][i] = '/';
+                        }
                         snprintf(dir_name, MAX_SYSFS_PATH_SIZE, "%s/%s/size",
                                 SYSFS_BLOCK, blk_dev_name[dev_cnt]);
                         readAttribute(dir_name, tmp_buff);
@@ -694,7 +702,7 @@ int getUsableBlockDevs(CDKSCREEN *cdk_screen,
  * string (char array) with it's current state.
  */
 char *rcSvcStatus(char rc_svc_name[]) {
-    static char ret_buff[MISC_STRING_LEN] = {0};
+    static char ret_buff[MISC_STRING_LEN + 1] = {0};
     char *error_msg = NULL;
     char command_str[MAX_SHELL_CMD_LEN] = {0};
     int exit_stat = 0, ret_val = 0;
@@ -715,49 +723,6 @@ char *rcSvcStatus(char rc_svc_name[]) {
         SAFE_ASPRINTF(&error_msg, "The script exited with %d!", exit_stat);
         strncpy(ret_buff, error_msg, MISC_STRING_LEN);
         FREE_NULL(error_msg);
-    }
-
-    /* Done */
-    if (ret_buff[0] != '\0')
-        return ret_buff;
-    else
-        return NULL;
-}
-
-
-/**
- * @brief Execute the ESOS RPC Agent to get the status of the current license
- * file (if any). Return a simple string that indicates the license state.
- */
-char *checkAgentLic() {
-    static char ret_buff[MISC_STRING_LEN] = {0};
-    char lic_status_msg[MAX_SYSFS_ATTR_SIZE] = {0};
-    char *cmd_str = NULL, *error_msg = NULL;
-    int ret_val = 0, exit_stat = 0;
-    FILE *rpc_agent_cmd = NULL;
-
-    /* Since ret_buff is re-used between calls, we reset the first character */
-    ret_buff[0] = '\0';
-
-    /* Check the license file status by calling rpc_agent */
-    SAFE_ASPRINTF(&cmd_str, "%s --check 2>&1", RPC_AGENT_BIN);
-    rpc_agent_cmd = popen(cmd_str, "r");
-    fgets(lic_status_msg, sizeof (lic_status_msg), rpc_agent_cmd);
-    if ((exit_stat = pclose(rpc_agent_cmd)) == -1) {
-        ret_val = -1;
-    } else {
-        if (WIFEXITED(exit_stat))
-            ret_val = WEXITSTATUS(exit_stat);
-        else
-            ret_val = -1;
-    }
-    FREE_NULL(cmd_str);
-    if ((ret_val != 0) && (ret_val != 1)) {
-        SAFE_ASPRINTF(&error_msg, "The binary exited with %d!", ret_val);
-        strncpy(ret_buff, error_msg, MISC_STRING_LEN);
-        FREE_NULL(error_msg);
-    } else {
-        strncpy(ret_buff, strStrip(lic_status_msg), MISC_STRING_LEN);
     }
 
     /* Done */

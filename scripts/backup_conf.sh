@@ -5,10 +5,12 @@
 # (LABEL=esos_conf). The archive is created in the /tmp directory and
 # the absolute path of the file name is returned.
 
-ARCHIVE_NAME="esos_backup_conf-$(date +%s)"
+RELEASE="$(sed -r "s/ +/-/g" /etc/esos-release)"
+HOSTNAME="$(hostname)"
+ARCHIVE_NAME="esos_backup_conf-$(date +%s)@${HOSTNAME}@${RELEASE}"
 ARCHIVE_DIR="/tmp/${ARCHIVE_NAME}"
 ARCHIVE_FILE="${ARCHIVE_DIR}.tgz"
-SYNC_LOCK="/tmp/conf_sync_lock"
+SYNC_LOCK="/var/lock/conf_sync"
 CONF_MNT="/mnt/conf"
 
 # We use a temporary directory while collecting the data
@@ -18,21 +20,30 @@ mkdir -p ${ARCHIVE_DIR} || exit 1
 conf_sync.sh || exit 1
 
 # Prevent conf_sync.sh from running
-touch ${SYNC_LOCK} || exit 1
-trap 'rm -f ${SYNC_LOCK}' 0
+exec 200> "${SYNC_LOCK}"
+flock --timeout 300 -E 200 -x 200
+RC=${?}
+if [ ${RC} -ne 0 ]; then
+    echo "ERROR: Could not acquire conf_sync lock (RC=${RC})," \
+        "so we're not backing up!" 1>&2
+    exit ${RC}
+fi
 
-# Mount the ESOS config FS
-mount ${CONF_MNT} || exit 1
+if ! grep -q esos_persist /proc/cmdline; then
+    # Mount the ESOS config FS
+    mount ${CONF_MNT} || exit 1
+fi
 
-# Grab all items from the config
-rsync -aq ${CONF_MNT}/* ${ARCHIVE_DIR} || exit 1
+# Grab all items from the config - exclude stuff under /opt
+rsync -aq ${CONF_MNT}/* --exclude=rsync_dirs/opt ${ARCHIVE_DIR} || exit 1
 
 # Make the tarball
 tar cpfz ${ARCHIVE_FILE} --transform 's,^tmp/,,' \
     ${ARCHIVE_DIR} 2> /dev/null || exit 1
 
 # All done
-umount ${CONF_MNT} || exit 1
+if ! grep -q esos_persist /proc/cmdline; then
+    umount ${CONF_MNT} || exit 1
+fi
 rm -rf ${ARCHIVE_DIR} || exit 1
 echo "${ARCHIVE_FILE}"
-

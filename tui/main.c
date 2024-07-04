@@ -56,7 +56,6 @@ int main(int argc, char** argv) {
             tty_fd = 0;
     pid_t child_pid = 0;
     uid_t saved_uid = 0;
-    boolean inet_works = FALSE;
 
     /* The "blue" TUI theme */
     g_color_main_text[BLUE_TUI]         = COLOR_PAIR(5);
@@ -111,11 +110,6 @@ int main(int argc, char** argv) {
     for (i = 1; i < argc; i++)
         DEBUG_LOG("Argument %d: %s", i, argv[i]);
 
-#ifdef USAGE_PROMPT
-    /* Check if there is Internet access */
-    inet_works = checkInetAccess();
-#endif
-
     /* Set the TUI interface theme (colors) */
     setTheme();
 
@@ -154,16 +148,10 @@ start:
     /* Check if license has been accepted */
     if (!acceptLicense(cdk_screen)) {
         errorDialog(cdk_screen,
-                "You must accept the Enterprise Storage OS (ESOS) license",
+                "You must accept the " PRODUCT_NAME " license",
                 "agreement to use this software. Hit ENTER to exit.");
         goto quit;
     }
-#endif
-
-#ifdef USAGE_PROMPT
-    /* Usage count (only if we have Internet) */
-    if (inet_works)
-        reportUsage(cdk_screen);
 #endif
 
     /* Check and see if SCST is loaded */
@@ -173,37 +161,17 @@ start:
                 "functions will not work. Check the '/var/log/boot' file.");
     }
 
-#if defined(COMMERCIAL) && defined(SIMPLE_TUI)
+#ifdef SIMPLE_TUI
     /* Variables */
-    CDKLABEL *lic_status_label = 0, *ip_addr_label = 0, *web_ui_label = 0,
-            *rpc_agent_label = 0;
-    char *lic_status_msg[LIC_STATUS_INFO_LINES] = {NULL},
-            *ip_addr_msg[IP_ADDR_INFO_LINES] = {NULL},
-            *web_ui_msg[WEB_UI_INFO_LINES] = {NULL},
-            *rpc_agent_msg[RPC_AGENT_INFO_LINES] = {NULL};
+    CDKLABEL *ip_addr_label = 0;
+    CDKSCROLL *simple_menu_list = 0;
+    char *ip_addr_msg[IP_ADDR_INFO_LINES] = {NULL},
+        *simple_menu_opts[MAX_SIMPLE_MENU_OPTS] = {NULL};
+    char *scroll_title = NULL;
     struct ifaddrs *first_ifaddrs = NULL, *next_ifaddrs = NULL;
     void *tmp_addr_ptr = NULL;
     char addr_buffer[INET_ADDRSTRLEN] = {0};
-    int addr_line_cnt = 0;
-
-    /* License status information label */
-    SAFE_ASPRINTF(&lic_status_msg[0],
-            "</%d/B/U>ESOS License Status<!%d><!B><!U>"
-            "                           ",
-            g_color_info_header[g_curr_theme],
-            g_color_info_header[g_curr_theme]);
-    SAFE_ASPRINTF(&lic_status_msg[1], "%s",
-            prettyShrinkStr(46, checkAgentLic()));
-    lic_status_label = newCDKLabel(cdk_screen, 31, 1, lic_status_msg,
-            LIC_STATUS_INFO_LINES, TRUE, FALSE);
-    if (!lic_status_label) {
-        errorDialog(cdk_screen, LABEL_ERR_MSG, NULL);
-        goto quit;
-    }
-    setCDKLabelBoxAttribute(lic_status_label,
-            g_color_main_box[g_curr_theme]);
-    setCDKLabelBackgroundAttrib(lic_status_label,
-            g_color_main_text[g_curr_theme]);
+    int addr_line_cnt = 0, simple_menu_choice = 0;
 
     /* IP address information label */
     SAFE_ASPRINTF(&ip_addr_msg[0],
@@ -242,7 +210,7 @@ start:
         if (first_ifaddrs != NULL)
             freeifaddrs(first_ifaddrs);
     }
-    ip_addr_label = newCDKLabel(cdk_screen, 31, 5, ip_addr_msg,
+    ip_addr_label = newCDKLabel(cdk_screen, 31, 1, ip_addr_msg,
             IP_ADDR_INFO_LINES, TRUE, FALSE);
     if (!ip_addr_label) {
         errorDialog(cdk_screen, LABEL_ERR_MSG, NULL);
@@ -252,56 +220,6 @@ start:
             g_color_main_box[g_curr_theme]);
     setCDKLabelBackgroundAttrib(ip_addr_label,
             g_color_main_text[g_curr_theme]);
-
-    /* Web UI information label */
-    SAFE_ASPRINTF(&web_ui_msg[0],
-            "</%d/B/U>ESOS Web UI Services<!%d><!B><!U>"
-            "                          ",
-            g_color_info_header[g_curr_theme],
-            g_color_info_header[g_curr_theme]);
-    SAFE_ASPRINTF(&web_ui_msg[1], "rc.webui: %s",
-            prettyShrinkStr(36, rcSvcStatus("rc.webui")));
-    SAFE_ASPRINTF(&web_ui_msg[2], "rc.nginx: %s",
-            prettyShrinkStr(36, rcSvcStatus("rc.nginx")));
-    web_ui_label = newCDKLabel(cdk_screen, 31, 13, web_ui_msg,
-            WEB_UI_INFO_LINES, TRUE, FALSE);
-    if (!web_ui_label) {
-        errorDialog(cdk_screen, LABEL_ERR_MSG, NULL);
-        goto quit;
-    }
-    setCDKLabelBoxAttribute(web_ui_label,
-            g_color_main_box[g_curr_theme]);
-    setCDKLabelBackgroundAttrib(web_ui_label,
-            g_color_main_text[g_curr_theme]);
-
-    /* RPC agent information label */
-    SAFE_ASPRINTF(&rpc_agent_msg[0],
-            "</%d/B/U>ESOS RPC Agent Services<!%d><!B><!U>"
-            "                       ",
-            g_color_info_header[g_curr_theme],
-            g_color_info_header[g_curr_theme]);
-    SAFE_ASPRINTF(&rpc_agent_msg[1], "rc.rpcagent: %s",
-            prettyShrinkStr(33, rcSvcStatus("rc.rpcagent")));
-    SAFE_ASPRINTF(&rpc_agent_msg[2], "rc.stunnel:  %s",
-            prettyShrinkStr(33, rcSvcStatus("rc.stunnel")));
-    rpc_agent_label = newCDKLabel(cdk_screen, 31, 18, rpc_agent_msg,
-            RPC_AGENT_INFO_LINES, TRUE, FALSE);
-    if (!rpc_agent_label) {
-        errorDialog(cdk_screen, LABEL_ERR_MSG, NULL);
-        goto quit;
-    }
-    setCDKLabelBoxAttribute(rpc_agent_label,
-            g_color_main_box[g_curr_theme]);
-    setCDKLabelBackgroundAttrib(rpc_agent_label,
-            g_color_main_text[g_curr_theme]);
-#endif
-
-#ifdef SIMPLE_TUI
-    /* Variables */
-    char *simple_menu_opts[MAX_SIMPLE_MENU_OPTS] = {NULL};
-    char *scroll_title = NULL;
-    CDKSCROLL *simple_menu_list = 0;
-    int simple_menu_choice = 0;
 
     /* Create a simple menu scroll options list */
     SAFE_ASPRINTF(&simple_menu_opts[0], "<C></B>Quit the TUI<!B>");
@@ -626,16 +544,8 @@ refreshCDKScreen(cdk_screen);
                 FREE_NULL(scroll_title);
                 for (i = 0; i < MAX_SIMPLE_MENU_OPTS; i++)
                     FREE_NULL(simple_menu_opts[i]);
-#if defined(COMMERCIAL) && defined(SIMPLE_TUI)
-                for (i = 0; i < LIC_STATUS_INFO_LINES; i++)
-                    FREE_NULL(lic_status_msg[i]);
                 for (i = 0; i < IP_ADDR_INFO_LINES; i++)
                     FREE_NULL(ip_addr_msg[i]);
-                for (i = 0; i < WEB_UI_INFO_LINES; i++)
-                    FREE_NULL(web_ui_msg[i]);
-                for (i = 0; i < RPC_AGENT_INFO_LINES; i++)
-                    FREE_NULL(rpc_agent_msg[i]);
-#endif
                 destroyCDKScreenObjects(cdk_screen);
                 destroyCDKScreen(cdk_screen);
                 endCDK();
@@ -1208,17 +1118,9 @@ quit:
     }
     delwin(sub_window);
     delwin(main_window);
-#if defined(COMMERCIAL) && defined(SIMPLE_TUI)
-    for (i = 0; i < LIC_STATUS_INFO_LINES; i++)
-        FREE_NULL(lic_status_msg[i]);
+#ifdef SIMPLE_TUI
     for (i = 0; i < IP_ADDR_INFO_LINES; i++)
         FREE_NULL(ip_addr_msg[i]);
-    for (i = 0; i < WEB_UI_INFO_LINES; i++)
-        FREE_NULL(web_ui_msg[i]);
-    for (i = 0; i < RPC_AGENT_INFO_LINES; i++)
-        FREE_NULL(rpc_agent_msg[i]);
-#endif
-#ifdef SIMPLE_TUI
     FREE_NULL(scroll_title);
     for (i = 0; i < MAX_SIMPLE_MENU_OPTS; i++)
         FREE_NULL(simple_menu_opts[i]);
@@ -1392,6 +1294,7 @@ void statusBar(WINDOW *window) {
     getresuid(&ruid, &euid, &suid);
     pwd = getpwuid(suid);
     strncpy(username_str, pwd->pw_name, STAT_BAR_UNAME_MAX);
+    username_str[sizeof username_str - 1] = '\0';
     username_size = strlen(username_str);
 
     /* Figure out spacing for status bar */
@@ -1424,7 +1327,8 @@ boolean acceptLicense(CDKSCREEN *main_cdk_screen) {
     boolean eula_accepted = FALSE;
     dictionary *ini_dict = NULL;
     CDKLABEL *transmit_msg = 0;
-    char *error_msg = NULL, *conf_accept_eula = NULL, *swindow_title = NULL;
+    char *error_msg = NULL, *swindow_title = NULL;
+    const char *conf_accept_eula = NULL;
     char *swindow_info[MAX_ESOS_LICENSE_LINES] = {NULL};
     char line[ESOS_LICENSE_COLS] = {0};
     FILE *ini_file = NULL, *license_file = NULL;
@@ -1537,8 +1441,8 @@ boolean acceptLicense(CDKSCREEN *main_cdk_screen) {
 
             /* Ask the user to accept the license */
             eula_accepted = questionDialog(main_cdk_screen,
-                    "Do you accept the Enterprise Storage OS",
-                    "(ESOS) license agreement?");
+                    "Do you accept the " PRODUCT_NAME " license agreement?",
+                    NULL);
             if (iniparser_set(ini_dict, "general:accept_eula",
                     (eula_accepted ? "yes" : "no")) == -1) {
                 errorDialog(main_cdk_screen, SET_FILE_VAL_ERR, NULL);
@@ -1577,205 +1481,12 @@ boolean acceptLicense(CDKSCREEN *main_cdk_screen) {
 
 
 /**
- * @brief Read the ESOS configuration file and prompt the user to participate
- * in anonymous usage statistics; if user participates, whenever the ESOS
- * version changes (upgrade), an HTTP POST request is made.
- */
-void reportUsage(CDKSCREEN *main_cdk_screen) {
-    boolean question = FALSE;
-    dictionary *ini_dict = NULL;
-    uuid_t install_id = {0};
-    CDKLABEL *transmit_msg = 0;
-    char *error_msg = NULL, *conf_install_id = NULL, *conf_last_ver = NULL,
-            *conf_participate = NULL;
-    char install_id_str[UUID_STR_SIZE] = {0};
-    FILE *ini_file = NULL;
-    CURL *curl = NULL;
-    CURLcode result = 0;
-    struct curl_httppost *form_post = NULL, *last_ptr = NULL;
-
-    while (1) {
-        if (access(ESOS_CONF, F_OK) != 0) {
-            if (errno == ENOENT) {
-                /* The iniparser_load function expects a file (even empty) */
-                if ((ini_file = fopen(ESOS_CONF, "w")) == NULL) {
-                    SAFE_ASPRINTF(&error_msg, ESOS_CONF_WRITE_ERR,
-                            strerror(errno));
-                    errorDialog(main_cdk_screen, error_msg, NULL);
-                    FREE_NULL(error_msg);
-                    break;
-                }
-                fclose(ini_file);
-            } else {
-                /* Missing file is okay, but fail otherwise */
-                SAFE_ASPRINTF(&error_msg, "access(): %s", strerror(errno));
-                errorDialog(main_cdk_screen, error_msg, NULL);
-                FREE_NULL(error_msg);
-                break;
-            }
-        }
-
-        /* Read ESOS configuration file (INI file) */
-        ini_dict = iniparser_load(ESOS_CONF);
-        if (ini_dict == NULL) {
-            errorDialog(main_cdk_screen, ESOS_CONF_READ_ERR_1,
-                    ESOS_CONF_READ_ERR_2);
-            break;
-        }
-
-        /* We set the section in every case */
-        if (iniparser_set(ini_dict, "usage", NULL) == -1) {
-            errorDialog(main_cdk_screen, SET_FILE_VAL_ERR, NULL);
-            break;
-        }
-
-        /* Parse INI file values (if any) */
-        conf_participate = iniparser_getstring(ini_dict,
-                "usage:participate", "");
-        conf_install_id = iniparser_getstring(ini_dict,
-                "usage:install_id", "");
-        conf_last_ver = iniparser_getstring(ini_dict,
-                "usage:last_ver", "");
-
-        /* This may be a new configuration file, prompt the user */
-        if (conf_participate[0] == '\0') {
-            question = questionDialog(main_cdk_screen,
-                    "Anonymously report usage statistics?", NULL);
-            if (iniparser_set(ini_dict, "usage:participate",
-                    (question ? "yes" : "no")) == -1) {
-                errorDialog(main_cdk_screen, SET_FILE_VAL_ERR, NULL);
-                break;
-            }
-            /* Read the string value again, and save the file */
-            conf_participate = iniparser_getstring(ini_dict,
-                    "usage:participate", "");
-            if ((ini_file = fopen(ESOS_CONF, "w")) == NULL) {
-                SAFE_ASPRINTF(&error_msg, ESOS_CONF_WRITE_ERR, strerror(errno));
-                errorDialog(main_cdk_screen, error_msg, NULL);
-                FREE_NULL(error_msg);
-                break;
-            }
-            iniparser_dump_ini(ini_dict, ini_file);
-            fclose(ini_file);
-        }
-
-        if (strcmp(conf_participate, "no") == 0) {
-            /* Nothing to do */
-            break;
-
-        } else if (strcmp(conf_participate, "yes") == 0) {
-            /* If we don't have an installation ID, generate one */
-            if (conf_install_id[0] == '\0') {
-                uuid_generate(install_id);
-                uuid_unparse_lower(install_id, install_id_str);
-                if (iniparser_set(ini_dict, "usage:install_id",
-                        install_id_str) == -1) {
-                    errorDialog(main_cdk_screen, SET_FILE_VAL_ERR, NULL);
-                    break;
-                }
-                /* Read the string value again, and save the file */
-                conf_install_id = iniparser_getstring(ini_dict,
-                        "usage:install_id", "");
-                if ((ini_file = fopen(ESOS_CONF, "w")) == NULL) {
-                    SAFE_ASPRINTF(&error_msg, ESOS_CONF_WRITE_ERR, strerror(errno));
-                    errorDialog(main_cdk_screen, error_msg, NULL);
-                    FREE_NULL(error_msg);
-                    break;
-                }
-                iniparser_dump_ini(ini_dict, ini_file);
-                fclose(ini_file);
-            }
-
-            /* Last reported version doesn't match what we have, report it */
-            if (strcmp(conf_last_ver, ESOS_VERSION) != 0) {
-                /* Display a message while we transmit */
-                transmit_msg = newCDKLabel(main_cdk_screen, CENTER, CENTER,
-                        g_usage_label_msg, g_usage_label_msg_size(),
-                        TRUE, FALSE);
-                if (!transmit_msg) {
-                    errorDialog(main_cdk_screen, LABEL_ERR_MSG, NULL);
-                    break;
-                }
-                setCDKLabelBackgroundAttrib(transmit_msg,
-                        g_color_dialog_text[g_curr_theme]);
-                setCDKLabelBoxAttribute(transmit_msg,
-                        g_color_dialog_box[g_curr_theme]);
-                refreshCDKScreen(main_cdk_screen);
-
-                /* Initialize cURL */
-                curl_global_init(CURL_GLOBAL_ALL);
-                if ((curl = curl_easy_init()) != NULL) {
-                    /* Fill in our form fields */
-                    curl_formadd(&form_post, &last_ptr, CURLFORM_COPYNAME,
-                            "branch", CURLFORM_COPYCONTENTS,
-                            GIT_BRANCH, CURLFORM_END);
-                    curl_formadd(&form_post, &last_ptr, CURLFORM_COPYNAME,
-                            "ver_string", CURLFORM_COPYCONTENTS,
-                            ESOS_VERSION, CURLFORM_END);
-                    curl_formadd(&form_post, &last_ptr, CURLFORM_COPYNAME,
-                            "install_id", CURLFORM_COPYCONTENTS,
-                            conf_install_id, CURLFORM_END);
-
-                    /* Set cURL options for our HTTP POST */
-                    curl_easy_setopt(curl, CURLOPT_URL, USAGE_POST_URL);
-                    curl_easy_setopt(curl, CURLOPT_HTTPPOST, form_post);
-                    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-                    curl_easy_setopt(curl, CURLOPT_USERAGENT, TUI_LOG_PREFIX);
-
-                    /* Perform the request */
-                    result = curl_easy_perform(curl);
-                    if (result != CURLE_OK) {
-                        SAFE_ASPRINTF(&error_msg, "curl_easy_perform(): %s",
-                                curl_easy_strerror(result));
-                        errorDialog(main_cdk_screen, error_msg, NULL);
-                        FREE_NULL(error_msg);
-                        break;
-                    }
-
-                    /* Cleanup */
-                    curl_easy_cleanup(curl);
-                    curl_formfree(form_post);
-                }
-
-                /* Success if we made it this far, set the last version */
-                if (iniparser_set(ini_dict, "usage:last_ver",
-                        ESOS_VERSION) == -1) {
-                    errorDialog(main_cdk_screen, SET_FILE_VAL_ERR, NULL);
-                    break;
-                }
-                /* Save the file */
-                if ((ini_file = fopen(ESOS_CONF, "w")) == NULL) {
-                    SAFE_ASPRINTF(&error_msg, ESOS_CONF_WRITE_ERR,
-                            strerror(errno));
-                    errorDialog(main_cdk_screen, error_msg, NULL);
-                    FREE_NULL(error_msg);
-                    break;
-                }
-                iniparser_dump_ini(ini_dict, ini_file);
-                fclose(ini_file);
-            }
-        }
-
-        /* We got this far successfully, exit the loop */
-        break;
-    }
-
-    /* Done */
-    if (ini_dict != NULL)
-        iniparser_freedict(ini_dict);
-    destroyCDKLabel(transmit_msg);
-    refreshCDKScreen(main_cdk_screen);
-    return;
-}
-
-
-/**
  * @brief Parse the ESOS configuration file (if any), and set the theme to the
  * user-set option, or if no configuration file exists, set the default theme.
  */
 void setTheme() {
     dictionary *ini_dict = NULL;
-    char *conf_theme = NULL;
+    const char *conf_theme = NULL;
     FILE *ini_file = NULL;
 
     while (1) {

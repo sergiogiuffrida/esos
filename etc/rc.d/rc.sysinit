@@ -10,10 +10,33 @@
 /bin/mount /dev/shm
 /bin/mount -t configfs none /sys/kernel/config
 /bin/mount -t debugfs nodev /sys/kernel/debug
-
-/sbin/bootlogd -c
+/bin/mount -t tmpfs tmpfs /sys/fs/cgroup
+for i in cpuset cpu cpuacct blkio memory devices freezer perf_event pids; do
+    /bin/mkdir -p /sys/fs/cgroup/${i}
+    /bin/mount -t cgroup -o ${i} none /sys/fs/cgroup/${i}
+done
+/bin/echo 1 > /sys/fs/cgroup/memory/memory.use_hierarchy
 
 /bin/ln -sf bash /bin/sh
+/bin/grep -v rootfs /proc/mounts > /etc/mtab
+
+if /bin/grep esos_persist /proc/cmdline > /dev/null 2>&1; then
+    /bin/echo "Persistent mode enabled; checking and mounting file systems..."
+    ESOS_PERSIST=1 /etc/rc.d/rc.fsmount start
+    if /bin/mountpoint -q /mnt/logs; then
+        /bin/mkdir -p /mnt/logs/var_log
+        /bin/mount --bind /mnt/logs/var_log /var/log
+    else
+        /bin/echo "ERROR: It appears 'esos_logs' is not mounted!"
+    fi
+fi
+
+# Set a temporary host name
+/bin/hostname localhost
+
+# Start logging daemons early
+/sbin/bootlogd -c
+/usr/sbin/syslogd
 
 if ! /bin/grep esos_iso /proc/cmdline > /dev/null 2>&1; then
     /bin/echo "Performing initial configuration sync..."
@@ -25,7 +48,6 @@ if [ -x /etc/rc.d/rc.udev ]; then
     /etc/rc.d/rc.udev
 fi
 
-/bin/grep -v rootfs /proc/mounts > /etc/mtab
 /bin/touch /var/log/wtmp
 /bin/touch /var/log/lastlog
 
@@ -33,14 +55,28 @@ if [ ! -L "/etc/localtime" ]; then
     /bin/ln -s /usr/share/zoneinfo/posix/Factory /etc/localtime
 fi
 
+if /bin/grep single_user /proc/cmdline > /dev/null 2>&1; then
+    if [ -e "/etc/single_user_needs_password" ]; then
+        /usr/sbin/sulogin --force /dev/console
+    else
+        /bin/bash -i
+    fi
+fi
+
 /bin/echo "Starting kernel log daemon (klogd)..."
 /usr/sbin/klogd -c1
 
 /bin/echo "Configuring kernel parameters..."
-/sbin/sysctl -p /etc/sysctl.conf
+/usr/sbin/sysctl -p /etc/sysctl.conf
 
 /bin/echo "Setting the x86 energy MSR policy for maximum performance..."
 /usr/bin/x86_energy_perf_policy performance
+
+/bin/echo "Disabling the C2 CPU idle state..."
+/usr/bin/cpupower idle-set -d 2 > /dev/null
+
+/bin/echo "Setting the CPU governor to 'performance'..."
+/usr/bin/cpupower frequency-set -g performance > /dev/null
 
 if [ -f "/var/lib/esos/random-seed" ]; then
     /bin/echo "Initializing random number generator..."
@@ -57,23 +93,25 @@ fi
 /bin/echo "Updating run-time linker cache..."
 /sbin/ldconfig
 
-fs_node=$(/sbin/findfs LABEL=esos_logs)
-base_blk_dev="$(/bin/echo ${fs_node} | \
-    /usr/bin/sed -e '/\/dev\/sd/s/4//; /\/dev\/nvme/s/p4//')"
-if [ -n "${fs_node}" ]; then
-    free_end=$(/usr/sbin/parted -m -s ${base_blk_dev} unit s print free | \
-        egrep ':free;$' | tail -n+2 | cut -d: -f3)
-    if [ -n "${free_end}" ]; then
-        echo "Growing the esos_logs file system..."
-        orig_start=`/usr/sbin/parted -m -s ${base_blk_dev} unit s print | \
-            egrep '^4:' | cut -d: -f2`
-        /usr/sbin/parted -m -s ${base_blk_dev} rm 4
-        /usr/sbin/parted -m -s ${base_blk_dev} mkpart primary \
-            ${orig_start} ${free_end}
-        /usr/sbin/udevadm settle --timeout=30
-        /sbin/blockdev --rereadpt ${base_blk_dev}
-        /bin/sleep 1
-        /usr/sbin/e2fsck -pf ${fs_node}
-        /usr/sbin/resize2fs -p ${fs_node}
+if ! /bin/grep -E 'esos_iso|esos_persist' /proc/cmdline > /dev/null 2>&1; then
+    fs_node=$(/sbin/findfs LABEL=esos_logs)
+    base_blk_dev="$(/bin/echo ${fs_node} | \
+        /usr/bin/sed -e '/\/dev\/sd/s/4//; /\/dev\/nvme/s/p4//')"
+    if [ -n "${fs_node}" ]; then
+        free_end=$(/usr/sbin/parted -m -s ${base_blk_dev} unit s print free | \
+            egrep ':free;$' | tail -n+2 | cut -d: -f3)
+        if [ -n "${free_end}" ]; then
+            echo "Growing the esos_logs file system..."
+            orig_start=`/usr/sbin/parted -m -s ${base_blk_dev} unit s print | \
+                egrep '^4:' | cut -d: -f2`
+            /usr/sbin/parted -m -s ${base_blk_dev} rm 4
+            /usr/sbin/parted -m -s ${base_blk_dev} mkpart primary \
+                ${orig_start} ${free_end}
+            /usr/sbin/udevadm settle --timeout=30
+            /sbin/blockdev --rereadpt ${base_blk_dev}
+            /bin/sleep 1
+            /usr/sbin/e2fsck -pf ${fs_node}
+            /usr/sbin/resize2fs -p ${fs_node}
+        fi
     fi
 fi

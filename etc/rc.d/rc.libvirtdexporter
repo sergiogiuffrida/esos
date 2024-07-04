@@ -1,0 +1,49 @@
+#! /bin/sh
+
+source /etc/rc.d/common
+
+LIBVIRTD_EXPORTER="/usr/bin/libvirtd_exporter"
+LIBVIRTD_EXPORTER_LOCK="/var/lock/libvirtd_exporter"
+DFLT_OPTS="> /var/log/libvirtd_exporter.log 2>&1 &"
+PWATCHER="/usr/local/sbin/pwatcher.sh"
+
+check_args ${@}
+
+SCRIPT="$(/usr/bin/basename ${0})"
+if check_opts_set ${SCRIPT}; then
+    USER_OPTS="$(get_rc_opts ${SCRIPT})"
+    if [ ${?} -ne 0 ]; then
+        /bin/echo ${USER_OPTS}
+        exit 1
+    fi
+else
+    USER_OPTS="${DFLT_OPTS}"
+fi
+
+start() {
+    /bin/echo "Starting libvirtd_exporter..."
+    eval ${PWATCHER} \"\" ${LIBVIRTD_EXPORTER_LOCK} \
+        ${LIBVIRTD_EXPORTER} ${USER_OPTS} || exit 1
+    # The pwatcher script creates the lock file
+}
+
+stop() {
+    /bin/echo "Stopping libvirtd_exporter..."
+    # Stop the pwatcher process that is monitoring this script and it will stop
+    pwatcher_pids=$(/usr/bin/pidof -x -o %PPID "$(basename ${PWATCHER})")
+    for pwatcher_pid in ${pwatcher_pids}; do
+        if grep -q "${LIBVIRTD_EXPORTER}" "/proc/${pwatcher_pid}/cmdline"; then
+            /usr/bin/kill -TERM "${pwatcher_pid}"
+            wait_for_pid_stop "${pwatcher_pid}" && \
+                /bin/rm -f ${LIBVIRTD_EXPORTER_LOCK}
+        fi
+    done
+}
+
+status() {
+    /usr/bin/pidof ${LIBVIRTD_EXPORTER} > /dev/null 2>&1
+    exit ${?}
+}
+
+# Perform specified action
+${1}

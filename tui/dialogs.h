@@ -105,10 +105,7 @@ extern int g_color_dialog_title[MAX_TUI_THEMES];
 #define NEW_ARRAY_INFO_LINES            3
 #define ADD_VDISK_INFO_LINES            4
 #define NEW_LV_INFO_LINES               4
-#define LIC_STATUS_INFO_LINES           2
 #define IP_ADDR_INFO_LINES              6
-#define WEB_UI_INFO_LINES               3
-#define RPC_AGENT_INFO_LINES            3
 #define CONFIRM_DIAG_MSG_SIZE           6
 #define ERROR_DIAG_MSG_SIZE             6
 #define INFORM_DIAG_MSG_SIZE            6
@@ -129,7 +126,7 @@ extern int g_color_dialog_title[MAX_TUI_THEMES];
 #define MAX_SMTP_LEN            32
 #define MAX_SMTP_USER_LEN       32
 #define MAX_SMTP_PASS_LEN       32
-#define MAX_INI_VAL             64
+#define MAX_INI_VAL             2048
 #define MAX_NET_IFACE           32
 #define MAX_HOSTNAME            32
 #define MAX_DOMAINNAME          32
@@ -154,6 +151,7 @@ extern int g_color_dialog_title[MAX_TUI_THEMES];
 #define MAX_BR_MEMBERS_LIST_BUFF        512
 #define MAX_BOND_OPTS_BUFF              512
 #define MAX_ETHTOOL_OPTS_BUFF           512
+#define MAX_VLAN_EGRESS_MAP_BUFF        512
 #define MAX_HWRAID_CTRLRS               64
 #define MAX_HWRAID_PDRVS                256
 #define MAX_HWRAID_LDRVS                128

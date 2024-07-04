@@ -32,8 +32,7 @@ extern "C" {
 #define TEMP_DIR                "/tmp"
 #define SYS_FILE_SYSTEMS        "/proc /sys /dev/pts /dev/shm /boot " \
         "/mnt/root /mnt/conf /mnt/logs /tmp"
-#define USAGE_POST_URL          "http://usage.esos-project.com/post_info.php"
-#define INET_TEST_HOST          "usage.esos-project.com"
+#define INET_TEST_HOST          "www.google.com"
 
 /* System menu layout */
 #define SYSTEM_MENU             0
@@ -134,7 +133,7 @@ extern "C" {
 #define GIBIBYTE_SIZE           1073741824LL
 #define MEBIBYTE_SIZE           1048576LL
 #define VDISK_WRITE_SIZE        262144
-#define MAX_SHELL_CMD_LEN       256
+#define MAX_SHELL_CMD_LEN       10240
 #define MISC_STRING_LEN         1024
 #define UUID_STR_SIZE           64
 #define MAX_TUI_STR_LEN         256
@@ -177,7 +176,6 @@ extern "C" {
 #define VGREMOVE_BIN    "/usr/sbin/vgremove"
 #define LVCREATE_BIN    "/usr/sbin/lvcreate"
 #define LVREMOVE_BIN    "/usr/sbin/lvremove"
-#define RPC_AGENT_BIN   "/opt/sbin/rpc_agent"
 
 /* A few sysfs settings */
 #define SYSFS_FC_HOST           "/sys/class/fc_host"
